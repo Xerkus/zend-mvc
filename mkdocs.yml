@@ -8,7 +8,6 @@ pages:
       - 'Default Services': services.md
       - Routing: routing.md
       - 'The MVC Event': mvc-event.md
-      - 'The SendResponse Event': send-response-event.md
       - 'Available Controllers': controllers.md
       - 'Controller Plugins': plugins.md
       - Examples: examples.md

@@ -67,7 +67,6 @@ trait InvalidControllerTypeTrait
                     'Request'              => Request::class,
                     'Response'             => Response::class,
                     'ViewManager'          => TestAsset\MockViewManager::class,
-                    'SendResponseListener' => TestAsset\MockSendResponseListener::class,
                     'BootstrapListener'    => TestAsset\StubBootstrapListener::class,
                 ],
                 'services' => [

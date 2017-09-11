@@ -270,12 +270,7 @@ Class                                         | In Method | Description
 
 ### Listeners
 
-The following classes listen to this event (sorted from higher priority to lower
-priority):
-
-Class                           | Priority | Method Called  | Description
---------------------------------|---------:|----------------|------------
-`Zend\Mvc\SendResponseListener` | -10000   | `sendResponse` | Triggers the `SendResponseEvent` in order to prepare the response (see the next chapter for more information about `SendResponseEvent`).
+No listeners are registered for this event by default.
 
 ### Triggered By
 

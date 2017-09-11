@@ -61,7 +61,6 @@ class ApplicationTest extends TestCase
                     'Request'              => PhpEnvironment\Request::class,
                     'Response'             => PhpEnvironment\Response::class,
                     'ViewManager'          => TestAsset\MockViewManager::class,
-                    'SendResponseListener' => TestAsset\MockSendResponseListener::class,
                     'StubBootstrapListener' => TestAsset\StubBootstrapListener::class,
                 ],
                 'factories' => [
@@ -166,7 +165,6 @@ class ApplicationTest extends TestCase
             'route'         => ['RouteListener'        , MvcEvent::EVENT_ROUTE     , 'onRoute'],
             'dispatch'      => ['DispatchListener'     , MvcEvent::EVENT_DISPATCH  , 'onDispatch'],
             'middleware'    => ['MiddlewareListener'   , MvcEvent::EVENT_DISPATCH  , 'onDispatch'],
-            'send_response' => ['SendResponseListener' , MvcEvent::EVENT_FINISH    , 'sendResponse'],
             'view_manager'  => ['ViewManager'          , MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap'],
             'http_method'   => ['HttpMethodListener'   , MvcEvent::EVENT_ROUTE     , 'onRoute'],
             'custom'        => ['StubBootstrapListener', MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap'],

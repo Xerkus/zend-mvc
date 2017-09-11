@@ -79,7 +79,6 @@ services configured out of the box.
 - `DispatchListener`, mapping to `Zend\Mvc\DispatchListener`.
 - `Zend\Mvc\MiddlewareListener`.
 - `RouteListener`, mapping to `Zend\Mvc\RouteListener`.
-- `SendResponseListener`, mapping to `Zend\Mvc\SendResponseListener`.
 - `SharedEventManager`, mapping to `Zend\EventManager\SharedEventManager`.
 
 ### Factories

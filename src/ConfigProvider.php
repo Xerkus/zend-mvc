@@ -26,7 +26,6 @@ use Zend\Mvc\Container\PaginatorPluginManagerFactory;
 use Zend\Mvc\Container\RequestFactory;
 use Zend\Mvc\Container\ResponseFactory;
 use Zend\Mvc\Container\RouteNotFoundStrategyFactory;
-use Zend\Mvc\Container\SendResponseListenerFactory;
 use Zend\Mvc\Container\SharedEventManagerFactory;
 use Zend\Mvc\Container\ViewFactory;
 use Zend\Mvc\Container\ViewFeedStrategyFactory;
@@ -74,7 +73,6 @@ class ConfigProvider
                 'request' => 'Request',
                 'response' => 'Response',
                 'RouteListener' => RouteListener::class,
-                'SendResponseListener' => SendResponseListener::class,
                 'SharedEventManagerInterface' => 'SharedEventManager',
                 'View' => View::class,
                 'ViewFeedRenderer' => FeedRenderer::class,
@@ -123,7 +121,6 @@ class ConfigProvider
                 PhpRenderer::class => ViewPhpRendererFactory::class,
                 PhpRendererStrategy::class => ViewPhpRendererStrategyFactory::class,
                 RouteListener::class => InvokableFactory::class,
-                SendResponseListener::class => SendResponseListenerFactory::class,
                 View::class => ViewFactory::class,
             ],
             'shared' => [
