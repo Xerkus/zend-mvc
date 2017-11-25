@@ -9,11 +9,14 @@ declare(strict_types=1);
 
 namespace Zend\Mvc\View\Http;
 
+use Psr\Http\Message\ResponseInterface;
 use Zend\EventManager\AbstractListenerAggregate;
 use Zend\EventManager\EventManagerInterface;
+use Zend\Http\PhpEnvironment\Response as HttpResponse;
 use Zend\Mvc\Application;
 use Zend\Mvc\MvcEvent;
-use Zend\Stdlib\ResponseInterface as Response;
+use Zend\Psr7Bridge\Psr7Response;
+use Zend\Psr7Bridge\Psr7ServerRequest;
 use Zend\View\Model\ModelInterface as ViewModel;
 use Zend\View\View;
 
@@ -35,7 +38,6 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
      * Set view
      *
      * @param  View $view
-     * @return DefaultRenderingStrategy
      */
     public function __construct(View $view)
     {
@@ -45,7 +47,7 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
     /**
      * {@inheritDoc}
      */
-    public function attach(EventManagerInterface $events, $priority = 1)
+    public function attach(EventManagerInterface $events, $priority = 1) : void
     {
         $this->listeners[] = $events->attach(MvcEvent::EVENT_RENDER, [$this, 'render'], -10000);
         $this->listeners[] = $events->attach(MvcEvent::EVENT_RENDER_ERROR, [$this, 'render'], -10000);
@@ -55,12 +57,11 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
      * Set layout template value
      *
      * @param  string $layoutTemplate
-     * @return DefaultRenderingStrategy
+     * @return void
      */
-    public function setLayoutTemplate(string $layoutTemplate)
+    public function setLayoutTemplate(string $layoutTemplate) : void
     {
         $this->layoutTemplate = $layoutTemplate;
-        return $this;
     }
 
     /**
@@ -68,7 +69,7 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
      *
      * @return string
      */
-    public function getLayoutTemplate()
+    public function getLayoutTemplate() : string
     {
         return $this->layoutTemplate;
     }
@@ -77,13 +78,13 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
      * Render the view
      *
      * @param  MvcEvent $e
-     * @return Response|null
-     * @throws \Exception
+     * @return null|ResponseInterface
+     * @throws \Throwable
      */
-    public function render(MvcEvent $e)
+    public function render(MvcEvent $e) : ?ResponseInterface
     {
         $result = $e->getResult();
-        if ($result instanceof Response) {
+        if ($result instanceof ResponseInterface) {
             return $result;
         }
 
@@ -96,33 +97,29 @@ class DefaultRenderingStrategy extends AbstractListenerAggregate
         }
 
         $view = $this->view;
-        $view->setRequest($request);
-        $view->setResponse($response);
-
-        $caughtException = null;
+        // @TODO fix after view is updated
+        $view->setRequest(Psr7ServerRequest::toZend($request));
+        $httpResponse = $response ? Psr7Response::toZend($response) : new HttpResponse();
+        $view->setResponse($httpResponse);
 
         try {
             $view->render($viewModel);
         } catch (\Throwable $ex) {
-            $caughtException = $ex;
-        } catch (\Exception $ex) {  // @TODO clean up once PHP 7 requirement is enforced
-            $caughtException = $ex;
-        }
-
-        if ($caughtException !== null) {
             if ($e->getName() === MvcEvent::EVENT_RENDER_ERROR) {
-                throw $caughtException;
+                throw $ex;
             }
 
             $application = $e->getApplication();
             $events      = $application->getEventManager();
 
             $e->setError(Application::ERROR_EXCEPTION);
-            $e->setParam('exception', $caughtException);
+            $e->setParam('exception', $ex);
             $e->setName(MvcEvent::EVENT_RENDER_ERROR);
             $events->triggerEvent($e);
         }
 
+        $response = Psr7Response::fromZend($httpResponse);
+        $e->setResponse($response);
         return $response;
     }
 }

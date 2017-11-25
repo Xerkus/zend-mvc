@@ -10,12 +10,11 @@ declare(strict_types=1);
 namespace ZendTest\Mvc\View;
 
 use PHPUnit\Framework\TestCase;
-use Zend\EventManager\Event;
+use Zend\Diactoros\Response;
+use Zend\Diactoros\ServerRequest;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\SharedEventManager;
 use Zend\EventManager\Test\EventListenerIntrospectionTrait;
-use Zend\Http\Request;
-use Zend\Http\Response;
 use Zend\Mvc\Application;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\View\Http\DefaultRenderingStrategy;
@@ -26,6 +25,7 @@ use Zend\View\View;
 use Zend\View\Model\ViewModel;
 use Zend\View\Resolver\TemplateMapResolver;
 use Zend\View\Strategy\PhpRendererStrategy;
+use Zend\View\ViewEvent;
 
 class DefaultRendereringStrategyTest extends TestCase
 {
@@ -41,13 +41,13 @@ class DefaultRendereringStrategyTest extends TestCase
     public function setUp()
     {
         $this->view     = new View();
-        $this->request  = new Request();
+        $this->request  = new ServerRequest([], [], null, 'GET', 'php://memory');
         $this->response = new Response();
         $this->event    = new MvcEvent();
         $this->renderer = new PhpRenderer();
 
-        $this->event->setRequest($this->request)
-                    ->setResponse($this->response);
+        $this->event->setRequest($this->request);
+        $this->event->setResponse($this->response);
 
         $this->strategy = new DefaultRenderingStrategy($this->view);
     }
@@ -87,14 +87,17 @@ class DefaultRendereringStrategyTest extends TestCase
         $this->view->addRenderingStrategy(function ($e) use ($renderer) {
             return $renderer;
         }, 100);
+        $this->view->addResponseStrategy(function (ViewEvent $e) {
+            $e->getResponse()->setContent($e->getResult());
+        }, 100);
         $model = new ViewModel(['foo' => 'bar']);
         $model->setOption('template', 'content');
-        $this->event->setResult($model);
+        $this->event->setViewModel($model);
 
         $result = $this->strategy->render($this->event);
-        $this->assertSame($this->response, $result);
 
         $expected = sprintf('content (%s): %s', json_encode(['template' => 'content']), json_encode(['foo' => 'bar']));
+        $this->assertEquals($expected, $result->getBody()->__toString());
     }
 
     public function testLayoutTemplateIsLayoutByDefault()
@@ -148,16 +151,12 @@ class DefaultRendereringStrategyTest extends TestCase
                     return $events;
                 },
             ],
-            'services' => [
-                'Request'  => $this->request,
-                'Response' => $this->response,
-            ],
             'shared' => [
                 'EventManager' => false,
             ],
         ]))->configureServiceManager($services);
 
-        $application = new Application($services, $services->get('EventManager'), $this->request, $this->response);
+        $application = new Application($services, $services->get('EventManager'));
         $this->event->setApplication($application);
 
         $test = (object) ['flag' => false];
