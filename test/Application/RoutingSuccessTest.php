@@ -13,6 +13,10 @@ use PHPUnit\Framework\TestCase;
 use Zend\Mvc\MvcEvent;
 use Zend\Router\RouteMatch;
 
+/**
+ * @group integration
+ * @coversNothing
+ */
 class RoutingSuccessTest extends TestCase
 {
     use PathControllerTrait;

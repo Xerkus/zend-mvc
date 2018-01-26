@@ -13,6 +13,10 @@ use PHPUnit\Framework\TestCase;
 use Zend\Mvc\Application;
 use Zend\Mvc\MvcEvent;
 
+/**
+ * @group integration
+ * @coversNothing
+ */
 class InabilityToRetrieveControllerShouldTriggerDispatchErrorTest extends TestCase
 {
     use MissingControllerTrait;

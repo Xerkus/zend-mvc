@@ -12,6 +12,10 @@ namespace ZendTest\Mvc\Application;
 use PHPUnit\Framework\TestCase;
 use Zend\Mvc\MvcEvent;
 
+/**
+ * @group integration
+ * @coversNothing
+ */
 class ControllerIsDispatchedTest extends TestCase
 {
     use PathControllerTrait;
