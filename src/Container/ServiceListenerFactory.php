@@ -40,9 +40,6 @@ class ServiceListenerFactory implements FactoryInterface
     protected $defaultServiceConfig = [
         'aliases' => [
             'application'                                => 'Application',
-            'Config'                                     => 'config',
-            'configuration'                              => 'config',
-            'Configuration'                              => 'config',
             'HttpDefaultRenderingStrategy'               => View\Http\DefaultRenderingStrategy::class,
             'MiddlewareListener'                         => 'Zend\Mvc\MiddlewareListener',
             'request'                                    => 'Request',
@@ -66,7 +63,6 @@ class ServiceListenerFactory implements FactoryInterface
         'invokables' => [],
         'factories'  => [
             'Application'                    => ApplicationFactory::class,
-            'config'                         => 'Zend\Mvc\Container\ConfigFactory',
             'ControllerManager'              => 'Zend\Mvc\Container\ControllerManagerFactory',
             'ControllerPluginManager'        => 'Zend\Mvc\Container\ControllerPluginManagerFactory',
             'DispatchListener'               => 'Zend\Mvc\Container\DispatchListenerFactory',
