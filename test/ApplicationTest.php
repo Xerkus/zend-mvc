@@ -18,8 +18,6 @@ use Zend\EventManager\SharedEventManager;
 use Zend\EventManager\Test\EventListenerIntrospectionTrait;
 use Zend\Http\PhpEnvironment;
 use Zend\Http\PhpEnvironment\Response;
-use Zend\ModuleManager\Listener\ConfigListener;
-use Zend\ModuleManager\ModuleEvent;
 use Zend\Mvc\Application;
 use Zend\Mvc\Controller\ControllerManager;
 use Zend\Mvc\MvcEvent;
@@ -31,6 +29,9 @@ use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\ResponseInterface;
 use Zend\View\Model\ViewModel;
 
+/**
+ * @covers \Zend\Mvc\Application
+ */
 class ApplicationTest extends TestCase
 {
     use EventListenerIntrospectionTrait;
@@ -65,22 +66,18 @@ class ApplicationTest extends TestCase
                     'Response'             => PhpEnvironment\Response::class,
                     'ViewManager'          => TestAsset\MockViewManager::class,
                     'SendResponseListener' => TestAsset\MockSendResponseListener::class,
-                    'BootstrapListener'    => TestAsset\StubBootstrapListener::class,
+                    'StubBootstrapListener' => TestAsset\StubBootstrapListener::class,
                 ],
                 'factories' => [
                     'Router' => Router\RouterFactory::class,
                 ],
                 'services' => [
-                    'config' => [],
-                    'ApplicationConfig' => [
-                        'modules' => [
-                            'Zend\Router',
-                        ],
-                        'module_listener_options' => [
-                            'config_cache_enabled' => false,
-                            'cache_dir'            => 'data/cache',
-                            'module_paths'         => [],
-                        ],
+                    'config' => [
+                        Application::class => [
+                            'listeners' => [
+                                'StubBootstrapListener',
+                            ]
+                        ]
                     ],
                 ],
             ]
@@ -89,21 +86,6 @@ class ApplicationTest extends TestCase
         (new ServiceManagerConfig($serviceConfig))->configureServiceManager($this->serviceManager);
         $this->serviceManager->setAllowOverride(true);
         $this->application = $this->serviceManager->get('Application');
-    }
-
-    public function getConfigListener()
-    {
-        $manager   = $this->serviceManager->get('ModuleManager');
-        $listeners = $this->getArrayOfListenersForEvent(ModuleEvent::EVENT_LOAD_MODULE, $manager->getEventManager());
-        return array_reduce($listeners, function ($found, $listener) {
-            if ($found || ! is_array($listener)) {
-                return $found;
-            }
-            $listener = array_shift($listener);
-            if ($listener instanceof ConfigListener) {
-                return $listener;
-            }
-        });
     }
 
     public function testRequestIsPopulatedFromServiceManager()
@@ -170,10 +152,10 @@ class ApplicationTest extends TestCase
      *
      * @dataProvider bootstrapRegistersListenersProvider
      */
-    public function testBootstrapRegistersListeners($listenerServiceName, $event, $method, $isCustom = false)
+    public function testBootstrapRegistersListeners($listenerServiceName, $event, $method)
     {
         $listenerService = $this->serviceManager->get($listenerServiceName);
-        $this->application->bootstrap($isCustom ? (array) $listenerServiceName : []);
+        $this->application->bootstrap();
         $events = $this->application->getEventManager();
 
         $foundListener = false;
@@ -184,15 +166,15 @@ class ApplicationTest extends TestCase
     public function bootstrapRegistersListenersProvider()
     {
         // @codingStandardsIgnoreStart
-        //                     [ Service Name,           Event,                       Method,        isCustom ]
+        //                     [ Service Name,           Event,                       Method]
         return [
-            'route'         => ['RouteListener'        , MvcEvent::EVENT_ROUTE     , 'onRoute',      false],
-            'dispatch'      => ['DispatchListener'     , MvcEvent::EVENT_DISPATCH  , 'onDispatch',   false],
-            'middleware'    => ['MiddlewareListener'   , MvcEvent::EVENT_DISPATCH  , 'onDispatch',   false],
-            'send_response' => ['SendResponseListener' , MvcEvent::EVENT_FINISH    , 'sendResponse', false],
-            'view_manager'  => ['ViewManager'          , MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap',  false],
-            'http_method'   => ['HttpMethodListener'   , MvcEvent::EVENT_ROUTE     , 'onRoute',      false],
-            'bootstrap'     => ['BootstrapListener'    , MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap',  true ],
+            'route'         => ['RouteListener'        , MvcEvent::EVENT_ROUTE     , 'onRoute'],
+            'dispatch'      => ['DispatchListener'     , MvcEvent::EVENT_DISPATCH  , 'onDispatch'],
+            'middleware'    => ['MiddlewareListener'   , MvcEvent::EVENT_DISPATCH  , 'onDispatch'],
+            'send_response' => ['SendResponseListener' , MvcEvent::EVENT_FINISH    , 'sendResponse'],
+            'view_manager'  => ['ViewManager'          , MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap'],
+            'http_method'   => ['HttpMethodListener'   , MvcEvent::EVENT_ROUTE     , 'onRoute'],
+            'custom'        => ['StubBootstrapListener', MvcEvent::EVENT_BOOTSTRAP , 'onBootstrap'],
         ];
         // @codingStandardsIgnoreEnd
     }
@@ -207,7 +189,7 @@ class ApplicationTest extends TestCase
             $defaultListeners[] = $this->serviceManager->get($defaultListenerName);
         }
 
-        $this->application->bootstrap(['BootstrapListener']);
+        $this->application->bootstrap();
         $eventManager = $this->application->getEventManager();
 
         $registeredListeners = [];

@@ -11,9 +11,15 @@ namespace Zend\Mvc;
 
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\ListenerAggregateInterface;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
+
+use function array_merge;
+use function array_unique;
+
+use const SORT_REGULAR;
 
 /**
  * Main application class for invoking applications
@@ -22,7 +28,6 @@ use Zend\Stdlib\ResponseInterface;
  * the following services:
  *
  * - EventManager
- * - ModuleManager
  * - Request
  * - Response
  * - RouteListener
@@ -71,6 +76,13 @@ class Application implements
     ];
 
     /**
+     * Extra application event listeners
+     *
+     * @var array
+     */
+    private $extraListeners;
+
+    /**
      * MVC event token
      * @var MvcEvent
      */
@@ -98,22 +110,19 @@ class Application implements
 
     /**
      * Constructor
-     *
-     * @param ServiceManager $serviceManager
-     * @param null|EventManagerInterface $events
-     * @param null|RequestInterface $request
-     * @param null|ResponseInterface $response
      */
     public function __construct(
         ServiceManager $serviceManager,
         EventManagerInterface $events = null,
         RequestInterface $request = null,
-        ResponseInterface $response = null
+        ResponseInterface $response = null,
+        array $extraListeners = []
     ) {
         $this->serviceManager = $serviceManager;
         $this->setEventManager($events ?: $serviceManager->get('EventManager'));
         $this->request        = $request ?: $serviceManager->get('Request');
         $this->response       = $response ?: $serviceManager->get('Response');
+        $this->extraListeners = $extraListeners;
     }
 
     /**
@@ -133,18 +142,20 @@ class Application implements
      * router. Attaches the ViewManager as a listener. Triggers the bootstrap
      * event.
      *
-     * @param array $listeners List of listeners to attach.
-     * @return Application
      */
-    public function bootstrap(array $listeners = [])
+    public function bootstrap() : void
     {
         $serviceManager = $this->serviceManager;
         $events         = $this->events;
 
         // Setup default listeners
-        $listeners = array_unique(array_merge($this->defaultListeners, $listeners));
+        $listeners = array_unique(array_merge($this->defaultListeners, $this->extraListeners), SORT_REGULAR);
 
         foreach ($listeners as $listener) {
+            if ($listener instanceof ListenerAggregateInterface) {
+                $listener->attach($events);
+                continue;
+            }
             $serviceManager->get($listener)->attach($events);
         }
 
@@ -159,8 +170,6 @@ class Application implements
 
         // Trigger bootstrap events
         $events->triggerEvent($event);
-
-        return $this;
     }
 
     /**
@@ -229,48 +238,6 @@ class Application implements
     public function getEventManager()
     {
         return $this->events;
-    }
-
-    /**
-     * Static method for quick and easy initialization of the Application.
-     *
-     * If you use this init() method, you cannot specify a service with the
-     * name of 'ApplicationConfig' in your service manager config. This name is
-     * reserved to hold the array from application.config.php.
-     *
-     * The following services can only be overridden from application.config.php:
-     *
-     * - ModuleManager
-     * - SharedEventManager
-     * - EventManager & Zend\EventManager\EventManagerInterface
-     *
-     * All other services are configured after module loading, thus can be
-     * overridden by modules.
-     *
-     * @param array $configuration
-     * @return Application
-     */
-    public static function init($configuration = [])
-    {
-        // Prepare the service manager
-        $smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : [];
-        $smConfig = new Container\ServiceManagerConfig($smConfig);
-
-        $serviceManager = new ServiceManager();
-        $smConfig->configureServiceManager($serviceManager);
-        $serviceManager->setService('ApplicationConfig', $configuration);
-
-        // Load modules
-        $serviceManager->get('ModuleManager')->loadModules();
-
-        // Prepare list of listeners to bootstrap
-        $listenersFromAppConfig     = isset($configuration['listeners']) ? $configuration['listeners'] : [];
-        $config                     = $serviceManager->get('config');
-        $listenersFromConfigService = isset($config['listeners']) ? $config['listeners'] : [];
-
-        $listeners = array_unique(array_merge($listenersFromConfigService, $listenersFromAppConfig));
-
-        return $serviceManager->get('Application')->bootstrap($listeners);
     }
 
     /**

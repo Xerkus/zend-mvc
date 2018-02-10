@@ -34,11 +34,15 @@ class ApplicationFactory implements FactoryInterface
             // @TODO convert Application to use ContainerInterface
             throw new RuntimeException('Mvc Application requires ServiceManager as ContainerInterface implementation');
         }
+
+        $config = $container->has('config') ? $container->get('config') : [];
+        $listeners = $config[Application::class]['listeners'] ?? [];
         return new Application(
             $container,
             $container->get('EventManager'),
             $container->get('Request'),
-            $container->get('Response')
+            $container->get('Response'),
+            $listeners
         );
     }
 }
