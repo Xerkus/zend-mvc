@@ -19,10 +19,9 @@ use Zend\EventManager\Test\EventListenerIntrospectionTrait;
 use Zend\Http\PhpEnvironment;
 use Zend\Http\PhpEnvironment\Response;
 use Zend\Mvc\Application;
+use Zend\Mvc\ConfigProvider;
 use Zend\Mvc\Controller\ControllerManager;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Container\ServiceManagerConfig;
-use Zend\Mvc\Container\ServiceListenerFactory;
 use Zend\Router;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
@@ -48,10 +47,7 @@ class ApplicationTest extends TestCase
 
     public function setUp()
     {
-        $serviceListener = new ServiceListenerFactory();
-        $r = new ReflectionProperty($serviceListener, 'defaultServiceConfig');
-        $r->setAccessible(true);
-        $serviceConfig = $r->getValue($serviceListener);
+        $serviceConfig = (new ConfigProvider())->getDependencyConfig();
 
         $serviceConfig = ArrayUtils::merge(
             $serviceConfig,
@@ -82,8 +78,7 @@ class ApplicationTest extends TestCase
                 ],
             ]
         );
-        $this->serviceManager = new ServiceManager();
-        (new ServiceManagerConfig($serviceConfig))->configureServiceManager($this->serviceManager);
+        $this->serviceManager = new ServiceManager($serviceConfig);
         $this->serviceManager->setAllowOverride(true);
         $this->application = $this->serviceManager->get('Application');
     }

@@ -9,12 +9,9 @@ declare(strict_types=1);
 
 namespace ZendTest\Mvc\Application;
 
-use ReflectionProperty;
 use Zend\Http\PhpEnvironment\Request;
 use Zend\Http\PhpEnvironment\Response;
-use Zend\Mvc\Application;
-use Zend\Mvc\Container\ServiceManagerConfig;
-use Zend\Mvc\Container\ServiceListenerFactory;
+use Zend\Mvc\ConfigProvider;
 use Zend\Router;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
@@ -41,13 +38,8 @@ trait MissingControllerTrait
             ],
         ];
 
-        $serviceListener = new ServiceListenerFactory();
-        $r = new ReflectionProperty($serviceListener, 'defaultServiceConfig');
-        $r->setAccessible(true);
-        $serviceConfig = $r->getValue($serviceListener);
-
         $serviceConfig = ArrayUtils::merge(
-            $serviceConfig,
+            (new ConfigProvider())->getDependencyConfig(),
             (new Router\ConfigProvider())->getDependencyConfig()
         );
 
@@ -68,19 +60,10 @@ trait MissingControllerTrait
                 ],
                 'services' => [
                     'config' => $config,
-                    'ApplicationConfig' => [
-                        'modules'                 => [],
-                        'module_listener_options' => [
-                            'config_cache_enabled' => false,
-                            'cache_dir'            => 'data/cache',
-                            'module_paths'         => [],
-                        ],
-                    ],
                 ],
             ]
         );
-        $services = new ServiceManager();
-        (new ServiceManagerConfig($serviceConfig))->configureServiceManager($services);
+        $services = new ServiceManager($serviceConfig);
         $application = $services->get('Application');
 
         $request = $services->get('Request');
