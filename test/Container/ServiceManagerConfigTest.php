@@ -91,7 +91,6 @@ class ServiceManagerConfigTest extends TestCase
 
         $this->assertTrue($sm->has('foo'));
         $this->assertTrue($sm->has('bar'));
-        $this->assertTrue($sm->has('ModuleManager'));
     }
 
     /**

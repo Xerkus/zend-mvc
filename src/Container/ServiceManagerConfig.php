@@ -37,7 +37,6 @@ class ServiceManagerConfig extends Config
         'aliases'            => [
             'EventManagerInterface'            => EventManager::class,
             EventManagerInterface::class       => 'EventManager',
-            ModuleManager::class               => 'ModuleManager',
             ServiceListener::class             => 'ServiceListener',
             SharedEventManager::class          => 'SharedEventManager',
             'SharedEventManagerInterface'      => 'SharedEventManager',
@@ -46,7 +45,6 @@ class ServiceManagerConfig extends Config
         'delegators' => [],
         'factories'  => [
             'EventManager'            => EventManagerFactory::class,
-            'ModuleManager'           => ModuleManagerFactory::class,
             'ServiceListener'         => ServiceListenerFactory::class,
         ],
         'lazy_services' => [],
