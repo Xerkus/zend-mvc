@@ -45,6 +45,7 @@ class ServiceManagerConfig extends Config
         'delegators' => [],
         'factories'  => [
             'EventManager'            => EventManagerFactory::class,
+            'SharedEventManager'      => SharedEventManagerFactory::class,
             'ServiceListener'         => ServiceListenerFactory::class,
         ],
         'lazy_services' => [],
@@ -71,10 +72,6 @@ class ServiceManagerConfig extends Config
     {
         $this->config['factories']['ServiceManager'] = function ($container) {
             return $container;
-        };
-
-        $this->config['factories']['SharedEventManager'] = function () {
-            return new SharedEventManager();
         };
 
         parent::__construct($config);
