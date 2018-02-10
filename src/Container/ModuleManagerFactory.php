@@ -47,13 +47,6 @@ class ModuleManagerFactory implements FactoryInterface
             'Zend\ModuleManager\Feature\ServiceProviderInterface',
             'getServiceConfig'
         );
-
-        $serviceListener->addServiceManager(
-            'ControllerManager',
-            'controllers',
-            'Zend\ModuleManager\Feature\ControllerProviderInterface',
-            'getControllerConfig'
-        );
         $serviceListener->addServiceManager(
             'ControllerPluginManager',
             'controller_plugins',
