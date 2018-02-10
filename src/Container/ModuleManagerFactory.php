@@ -48,12 +48,6 @@ class ModuleManagerFactory implements FactoryInterface
             'getServiceConfig'
         );
         $serviceListener->addServiceManager(
-            'ControllerPluginManager',
-            'controller_plugins',
-            'Zend\ModuleManager\Feature\ControllerPluginProviderInterface',
-            'getControllerPluginConfig'
-        );
-        $serviceListener->addServiceManager(
             'ViewHelperManager',
             'view_helpers',
             'Zend\ModuleManager\Feature\ViewHelperProviderInterface',
