@@ -11,6 +11,7 @@ namespace ZendTest\Mvc\Controller;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request;
@@ -21,6 +22,7 @@ use Zend\Mvc\Exception\RuntimeException;
 use Zend\Mvc\MvcEvent;
 use Zend\Stdlib\DispatchableInterface;
 use Zend\Stdlib\RequestInterface;
+use Zend\Stratigility\Middleware\CallableMiddlewareDecorator;
 use Zend\Stratigility\MiddlewarePipe;
 
 /**
@@ -32,11 +34,6 @@ class MiddlewareControllerTest extends TestCase
      * @var MiddlewarePipe|\PHPUnit_Framework_MockObject_MockObject
      */
     private $pipe;
-
-    /**
-     * @var ResponseInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $responsePrototype;
 
     /**
      * @var EventManagerInterface
@@ -58,15 +55,13 @@ class MiddlewareControllerTest extends TestCase
      */
     protected function setUp()
     {
-        $this->pipe              = $this->createMock(MiddlewarePipe::class);
-        $this->responsePrototype = $this->createMock(ResponseInterface::class);
+        $this->pipe              = new MiddlewarePipe();
         $this->eventManager      = $this->createMock(EventManagerInterface::class);
         $this->event             = new MvcEvent();
         $this->eventManager      = new EventManager();
 
         $this->controller = new MiddlewareController(
             $this->pipe,
-            $this->responsePrototype,
             $this->eventManager,
             $this->event
         );
@@ -107,7 +102,9 @@ class MiddlewareControllerTest extends TestCase
                 return true;
             }));
 
-        $this->pipe->expects(self::once())->method('process')->willReturn($result);
+        $this->pipe->pipe(new CallableMiddlewareDecorator(function () use ($result) {
+            return $result;
+        }));
 
         $controllerResult = $this->controller->dispatch($request, $response);
 
@@ -138,8 +135,9 @@ class MiddlewareControllerTest extends TestCase
                 return true;
             }));
 
-        $this->pipe->expects(self::never())->method('process');
-
+        $middleware = $this->createMock(MiddlewareInterface::class);
+        $middleware->expects(self::never())->method('process');
+        $this->pipe->pipe($middleware);
         $this->expectException(RuntimeException::class);
 
         $this->controller->dispatch($request, $response);

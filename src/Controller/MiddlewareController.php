@@ -11,6 +11,7 @@ namespace Zend\Mvc\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request;
 use Zend\Mvc\Exception\ReachedFinalHandlerException;
@@ -18,7 +19,6 @@ use Zend\Mvc\Exception\RuntimeException;
 use Zend\Mvc\MvcEvent;
 use Zend\Psr7Bridge\Psr7ServerRequest;
 use Zend\Router\RouteMatch;
-use Zend\Stratigility\Delegate\CallableDelegateDecorator;
 use Zend\Stratigility\MiddlewarePipe;
 
 /**
@@ -40,21 +40,13 @@ final class MiddlewareController extends AbstractController
      */
     private $pipe;
 
-    /**
-     * @var ResponseInterface
-     */
-    private $responsePrototype;
-
     public function __construct(
         MiddlewarePipe $pipe,
-        ResponseInterface $responsePrototype,
         EventManagerInterface $eventManager,
         MvcEvent $event
     ) {
         $this->eventIdentifier   = __CLASS__;
         $this->pipe              = $pipe;
-        $this->responsePrototype = $responsePrototype;
-
         $this->setEventManager($eventManager);
         $this->setEvent($event);
     }
@@ -72,12 +64,14 @@ final class MiddlewareController extends AbstractController
             $routeMatch
         );
 
-        $result = $this->pipe->process($psr7Request, new CallableDelegateDecorator(
-            function () {
+        $finalHandler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request) : ResponseInterface
+            {
                 throw ReachedFinalHandlerException::create();
-            },
-            $this->responsePrototype
-        ));
+            }
+        };
+
+        $result = $this->pipe->process($psr7Request, $finalHandler);
 
         $e->setResult($result);
 
@@ -89,7 +83,7 @@ final class MiddlewareController extends AbstractController
      *
      * @throws RuntimeException
      */
-    private function loadRequest()
+    private function loadRequest() : ServerRequestInterface
     {
         $request = $this->request;
 
@@ -110,8 +104,10 @@ final class MiddlewareController extends AbstractController
      *
      * @return ServerRequestInterface
      */
-    private function populateRequestParametersFromRoute(ServerRequestInterface $request, RouteMatch $routeMatch = null)
-    {
+    private function populateRequestParametersFromRoute(
+        ServerRequestInterface $request,
+        RouteMatch $routeMatch = null
+    ) : ServerRequestInterface {
         if (! $routeMatch) {
             return $request;
         }
