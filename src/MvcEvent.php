@@ -9,11 +9,9 @@ declare(strict_types=1);
 
 namespace Zend\Mvc;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\EventManager\Event;
-use Zend\Router\RouteMatch;
-use Zend\Router\RouteStackInterface;
-use Zend\Stdlib\RequestInterface as Request;
-use Zend\Stdlib\ResponseInterface as Response;
 use Zend\View\Model\ModelInterface as Model;
 use Zend\View\Model\ViewModel;
 
@@ -34,12 +32,12 @@ class MvcEvent extends Event
     protected $application;
 
     /**
-     * @var Request
+     * @var ServerRequestInterface
      */
     protected $request;
 
     /**
-     * @var Response
+     * @var ResponseInterface
      */
     protected $response;
 
@@ -49,133 +47,59 @@ class MvcEvent extends Event
     protected $result;
 
     /**
-     * @var RouteStackInterface
-     */
-    protected $router;
-
-    /**
-     * @var null|RouteMatch
-     */
-    protected $routeMatch;
-
-    /**
      * @var Model
      */
     protected $viewModel;
 
     /**
      * Set application instance
-     *
-     * @param  ApplicationInterface $application
-     * @return MvcEvent
      */
-    public function setApplication(ApplicationInterface $application)
+    public function setApplication(ApplicationInterface $application) : void
     {
         $this->setParam('application', $application);
         $this->application = $application;
-        return $this;
     }
 
     /**
      * Get application instance
-     *
-     * @return ApplicationInterface
      */
-    public function getApplication()
+    public function getApplication() : ApplicationInterface
     {
         return $this->application;
     }
 
     /**
-     * Get router
-     *
-     * @return RouteStackInterface
-     */
-    public function getRouter()
-    {
-        return $this->router;
-    }
-
-    /**
-     * Set router
-     *
-     * @param RouteStackInterface $router
-     * @return MvcEvent
-     */
-    public function setRouter(RouteStackInterface $router)
-    {
-        $this->setParam('router', $router);
-        $this->router = $router;
-        return $this;
-    }
-
-    /**
-     * Get route match
-     *
-     * @return null|RouteMatch
-     */
-    public function getRouteMatch()
-    {
-        return $this->routeMatch;
-    }
-
-    /**
-     * Set route match
-     *
-     * @param RouteMatch $matches
-     * @return MvcEvent
-     */
-    public function setRouteMatch(RouteMatch $matches)
-    {
-        $this->setParam('route-match', $matches);
-        $this->routeMatch = $matches;
-        return $this;
-    }
-
-    /**
      * Get request
-     *
-     * @return Request
      */
-    public function getRequest()
+    public function getRequest() : ?ServerRequestInterface
     {
         return $this->request;
     }
 
     /**
      * Set request
-     *
-     * @param Request $request
-     * @return MvcEvent
      */
-    public function setRequest(Request $request)
+    public function setRequest(?ServerRequestInterface $request) : void
     {
         $this->setParam('request', $request);
         $this->request = $request;
-        return $this;
     }
 
     /**
      * Get response
-     *
-     * @return Response
      */
-    public function getResponse()
+    public function getResponse() : ?ResponseInterface
     {
         return $this->response;
     }
 
     /**
      * Set response
-     *
-     * @param Response $response
-     * @return MvcEvent
      */
-    public function setResponse(Response $response)
+    public function setResponse(?ResponseInterface $response) : void
     {
         $this->setParam('response', $response);
         $this->response = $response;
-        return $this;
     }
 
     /**
@@ -184,10 +108,9 @@ class MvcEvent extends Event
      * @param  Model $viewModel
      * @return MvcEvent
      */
-    public function setViewModel(Model $viewModel)
+    public function setViewModel(Model $viewModel) : void
     {
         $this->viewModel = $viewModel;
-        return $this;
     }
 
     /**
@@ -217,88 +140,67 @@ class MvcEvent extends Event
      * Set result
      *
      * @param mixed $result
-     * @return MvcEvent
      */
-    public function setResult($result)
+    public function setResult($result) : void
     {
         $this->setParam('__RESULT__', $result);
         $this->result = $result;
-        return $this;
     }
 
     /**
      * Does the event represent an error response?
      *
-     * @return bool
      */
-    public function isError()
+    public function isError() : bool
     {
         return (bool) $this->getParam('error', false);
     }
 
     /**
      * Set the error message (indicating error in handling request)
-     *
-     * @param  string $message
-     * @return MvcEvent
      */
-    public function setError($message)
+    public function setError(?string $message) : void
     {
         $this->setParam('error', $message);
-        return $this;
     }
 
     /**
      * Retrieve the error message, if any
-     *
-     * @return string
      */
-    public function getError()
+    public function getError() : string
     {
         return $this->getParam('error', '');
     }
 
     /**
      * Get the currently registered controller name
-     *
-     * @return string
      */
-    public function getController()
+    public function getController() : ?string
     {
         return $this->getParam('controller');
     }
 
     /**
      * Set controller name
-     *
-     * @param  string $name
-     * @return MvcEvent
      */
-    public function setController($name)
+    public function setController(?string $name) : void
     {
         $this->setParam('controller', $name);
-        return $this;
     }
 
     /**
      * Get controller class
-     *
-     * @return string
      */
-    public function getControllerClass()
+    public function getControllerClass() : ?string
     {
         return $this->getParam('controller-class');
     }
 
     /**
      * Set controller class
-     *
-     * @param string $class
-     * @return MvcEvent
      */
-    public function setControllerClass($class)
+    public function setControllerClass(?string $class) : void
     {
         $this->setParam('controller-class', $class);
-        return $this;
     }
 }
