@@ -17,6 +17,7 @@ pages:
           - "Migration Overview": migration/index.md
           - 'v2.X to v2.7': migration/to-v2-7.md
           - 'v2.X to v3.0': migration/to-v3-0.md
+          - 'v3.X to v4.0': migration/to-v4-0.md
     - Cookbook:
       - 'Automating controller factories': cookbook/automating-controller-factories.md
       - 'Using middleware within event listeners': cookbook/middleware-in-listeners.md
