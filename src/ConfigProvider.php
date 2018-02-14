@@ -64,7 +64,6 @@ class ConfigProvider
     {
         return [
             'aliases' => [
-                'application' => 'Application',
                 'EventManagerInterface' => EventManager::class,
                 'HttpDefaultRenderingStrategy' => DefaultRenderingStrategy::class,
                 'MiddlewareListener' => MiddlewareListener::class,
@@ -88,7 +87,7 @@ class ConfigProvider
                 TemplatePathStack::class => 'ViewTemplatePathStack',
             ],
             'factories' => [
-                'Application' => ApplicationFactory::class,
+                Application::class => ApplicationFactory::class,
                 'ControllerManager' => ControllerManagerFactory::class,
                 'ControllerPluginManager' => ControllerPluginManagerFactory::class,
                 'DispatchListener' => DispatchListenerFactory::class,

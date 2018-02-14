@@ -11,11 +11,9 @@ namespace Zend\Mvc\Container;
 
 use Interop\Container\ContainerInterface;
 use Zend\Mvc\Application;
-use Zend\Mvc\Exception\RuntimeException;
 use Zend\ServiceManager\Factory\FactoryInterface;
-use Zend\ServiceManager\ServiceManager;
 
-class ApplicationFactory implements FactoryInterface
+final class ApplicationFactory implements FactoryInterface
 {
     /**
      * Create the Application service
@@ -23,18 +21,10 @@ class ApplicationFactory implements FactoryInterface
      * Creates a Zend\Mvc\Application service, passing it the configuration
      * service and the service manager instance.
      *
-     * @param  ContainerInterface $container
      * @param  string $name
-     * @param  null|array $options
-     * @return Application
      */
-    public function __invoke(ContainerInterface $container, $name, array $options = null)
+    public function __invoke(ContainerInterface $container, $name, array $options = null) : Application
     {
-        if (! $container instanceof ServiceManager) {
-            // @TODO convert Application to use ContainerInterface
-            throw new RuntimeException('Mvc Application requires ServiceManager as ContainerInterface implementation');
-        }
-
         $config = $container->has('config') ? $container->get('config') : [];
         $listeners = $config[Application::class]['listeners'] ?? [];
         return new Application(

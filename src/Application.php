@@ -9,13 +9,20 @@ declare(strict_types=1);
 
 namespace Zend\Mvc;
 
-use Zend\EventManager\EventManagerAwareInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
-use Zend\ServiceManager\ServiceManager;
+use Zend\Mvc\Exception\DomainException;
+use Zend\Mvc\View\Http\ViewManager;
 
 use function array_merge;
 use function array_unique;
+use function get_class;
+use function gettype;
+use function is_object;
+use function is_string;
 
 use const SORT_REGULAR;
 
@@ -29,7 +36,6 @@ use const SORT_REGULAR;
  * - Request
  * - Response
  * - RouteListener
- * - Router
  * - DispatchListener
  * - MiddlewareListener
  * - ViewManager
@@ -48,9 +54,7 @@ use const SORT_REGULAR;
  * if you wish to setup your own listeners and/or workflow; alternately, you
  * can simply extend the class to override such behavior.
  */
-class Application implements
-    ApplicationInterface,
-    EventManagerAwareInterface
+class Application implements ApplicationInterface
 {
     const ERROR_CONTROLLER_CANNOT_DISPATCH = 'error-controller-cannot-dispatch';
     const ERROR_CONTROLLER_NOT_FOUND       = 'error-controller-not-found';
@@ -65,11 +69,11 @@ class Application implements
      * @var array
      */
     protected $defaultListeners = [
-        'RouteListener',
-        'MiddlewareListener',
-        'DispatchListener',
-        'HttpMethodListener',
-        'ViewManager',
+        RouteListener::class,
+        MiddlewareListener::class,
+        DispatchListener::class,
+        HttpMethodListener::class,
+        ViewManager::class,
     ];
 
     /**
@@ -77,10 +81,9 @@ class Application implements
      *
      * @var array
      */
-    private $extraListeners;
+    private $extraListeners = [];
 
     /**
-     * MVC event token
      * @var MvcEvent
      */
     protected $event;
@@ -91,31 +94,30 @@ class Application implements
     protected $events;
 
     /**
-     * @var ServiceManager
+     * @var ContainerInterface
      */
-    protected $serviceManager;
+    private $container;
+
+    /**
+     * If application was bootstrapped
+     *
+     * @var bool
+     */
+    private $bootstrapped = false;
 
     /**
      * Constructor
      */
     public function __construct(
-        ServiceManager $serviceManager,
-        EventManagerInterface $events = null,
+        ContainerInterface $container,
+        EventManagerInterface $events,
         array $extraListeners = []
     ) {
-        $this->serviceManager = $serviceManager;
-        $this->setEventManager($events ?: $serviceManager->get('EventManager'));
+        $this->container = $container;
+        $this->setEventManager($events);
         $this->extraListeners = $extraListeners;
-    }
-
-    /**
-     * Retrieve the application configuration
-     *
-     * @return array|object
-     */
-    public function getConfig()
-    {
-        return $this->serviceManager->get('config');
+        $this->event = new MvcEvent();
+        $this->event->setApplication($this);
     }
 
     /**
@@ -128,39 +130,45 @@ class Application implements
      */
     public function bootstrap() : void
     {
-        $serviceManager = $this->serviceManager;
-        $events         = $this->events;
+        if ($this->bootstrapped) {
+            return;
+        }
+        $events = $this->events;
 
         // Setup default listeners
         $listeners = array_unique(array_merge($this->defaultListeners, $this->extraListeners), SORT_REGULAR);
 
         foreach ($listeners as $listener) {
-            if ($listener instanceof ListenerAggregateInterface) {
-                $listener->attach($events);
-                continue;
+            if (is_string($listener)) {
+                $listener = $this->container->get($listener);
             }
-            $serviceManager->get($listener)->attach($events);
+            if (! $listener instanceof ListenerAggregateInterface) {
+                throw new DomainException(sprintf(
+                    'Invalid listener provided. Expected %s, got %s',
+                    ListenerAggregateInterface::class,
+                    is_object($listener) ? get_class($listener) : gettype($listener)
+                ));
+            }
+            $listener->attach($events);
         }
 
         // Setup MVC Event
-        $this->event = $event  = new MvcEvent();
-        $event->setName(MvcEvent::EVENT_BOOTSTRAP);
+        $event = $this->event;
         $event->setTarget($this);
-        $event->setApplication($this);
-        $event->setRouter($serviceManager->get('Router'));
+        $event->setName(MvcEvent::EVENT_BOOTSTRAP);
 
         // Trigger bootstrap events
         $events->triggerEvent($event);
+
+        $this->bootstrapped = true;
     }
 
     /**
      * Retrieve the service manager
-     *
-     * @return ServiceManager
      */
-    public function getServiceManager()
+    public function getContainer() : ContainerInterface
     {
-        return $this->serviceManager;
+        return $this->container;
     }
 
     /**
@@ -168,46 +176,38 @@ class Application implements
      *
      * @return MvcEvent
      */
-    public function getMvcEvent()
+    public function getMvcEvent() : MvcEvent
     {
         return $this->event;
     }
 
     /**
      * Set the event manager instance
-     *
-     * @param  EventManagerInterface $eventManager
-     * @return Application
      */
-    public function setEventManager(EventManagerInterface $eventManager)
+    private function setEventManager(EventManagerInterface $eventManager) : void
     {
         $eventManager->setIdentifiers([
             __CLASS__,
             get_class($this),
         ]);
         $this->events = $eventManager;
-        return $this;
     }
 
     /**
      * Retrieve the event manager
-     *
-     * Lazy-loads an EventManager instance if none registered.
-     *
-     * @return EventManagerInterface
      */
-    public function getEventManager()
+    public function getEventManager() : EventManagerInterface
     {
         return $this->events;
     }
 
     /**
-     * Run the application
+     * Runs the mvc application
      *
      * @triggers route(MvcEvent)
-     *           Routes the request, and sets the RouteMatch object in the event.
+     *           Routes the request, and sets the RouteResult object in the request attributes.
      * @triggers dispatch(MvcEvent)
-     *           Dispatches a request, using the discovered RouteMatch and
+     *           Dispatches a request, using the discovered RouteResult and
      *           provided request.
      * @triggers dispatch.error(MvcEvent)
      *           On errors (controller not found, action not supported, etc.),
@@ -215,12 +215,19 @@ class Application implements
      *           discovered controller, and controller class (if known).
      *           Typically, a handler should return a populated Response object
      *           that can be returned immediately.
-     * @return self
      */
-    public function run()
+    public function handle(ServerRequestInterface $request) : ResponseInterface
     {
+        if (! $this->bootstrapped) {
+            $this->bootstrap();
+        }
         $events = $this->events;
         $event  = $this->event;
+        $origEvent = clone $this->event;
+
+        // reset event @TODO improve multiple requests handling
+        $event->setRequest($request);
+        $event->setResponse(null);
 
         // Define callback used to determine whether or not to short-circuit
         $shortCircuit = function ($r) use ($event) {
@@ -240,17 +247,18 @@ class Application implements
         if ($result->stopped()) {
             $response = $result->last();
             if ($response instanceof ResponseInterface) {
-                $event->setName(MvcEvent::EVENT_FINISH);
-                $event->setTarget($this);
                 $event->setResponse($response);
-                $event->stopPropagation(false); // Clear before triggering
-                $events->triggerEvent($event);
-                return $this;
+                $response = $this->completeRequest($event);
+                $this->event = $origEvent;
+                return $response;
             }
         }
 
         if ($event->getError()) {
-            return $this->completeRequest($event);
+            $this->render($event);
+            $response = $this->completeRequest($event);
+            $this->event = $origEvent;
+            return $response;
         }
 
         // Trigger dispatch event
@@ -261,28 +269,22 @@ class Application implements
         // Complete response
         $response = $result->last();
         if ($response instanceof ResponseInterface) {
-            $event->setName(MvcEvent::EVENT_FINISH);
-            $event->setTarget($this);
             $event->setResponse($response);
-            $event->stopPropagation(false); // Clear before triggering
-            $events->triggerEvent($event);
-            return $this;
+            $response = $this->completeRequest($event);
+            $this->event = $origEvent;
+            return $response;
         }
 
-        $event->setResponse($response);
-        return $this->completeRequest($event);
+        $this->render($event);
+        $response = $this->completeRequest($event);
+        $this->event = $origEvent;
+        return $response;
     }
 
     /**
-     * Complete the request
-     *
-     * Triggers "render" and "finish" events, and returns response from
-     * event object.
-     *
-     * @param  MvcEvent $event
-     * @return Application
+     * Triggers "render" event
      */
-    protected function completeRequest(MvcEvent $event)
+    private function render(MvcEvent $event) : void
     {
         $events = $this->events;
         $event->setTarget($this);
@@ -290,11 +292,26 @@ class Application implements
         $event->setName(MvcEvent::EVENT_RENDER);
         $event->stopPropagation(false); // Clear before triggering
         $events->triggerEvent($event);
+    }
+
+    /**
+     * Complete the request
+     *
+     * Triggers "finish" event, and returns response from event object.
+     */
+    private function completeRequest(MvcEvent $event) : ResponseInterface
+    {
+        $events = $this->events;
+        $event->setTarget($this);
 
         $event->setName(MvcEvent::EVENT_FINISH);
         $event->stopPropagation(false); // Clear before triggering
         $events->triggerEvent($event);
 
-        return $this;
+        $response = $event->getResponse();
+        if (null === $response) {
+            throw new DomainException('Application failed to produce a response');
+        }
+        return $response;
     }
 }
