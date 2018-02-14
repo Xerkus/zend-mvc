@@ -23,8 +23,6 @@ use Zend\Mvc\Container\HttpMethodListenerFactory;
 use Zend\Mvc\Container\HttpViewManagerFactory;
 use Zend\Mvc\Container\InjectTemplateListenerFactory;
 use Zend\Mvc\Container\PaginatorPluginManagerFactory;
-use Zend\Mvc\Container\RequestFactory;
-use Zend\Mvc\Container\ResponseFactory;
 use Zend\Mvc\Container\RouteNotFoundStrategyFactory;
 use Zend\Mvc\Container\SharedEventManagerFactory;
 use Zend\Mvc\Container\ViewFactory;
@@ -70,8 +68,6 @@ class ConfigProvider
                 'EventManagerInterface' => EventManager::class,
                 'HttpDefaultRenderingStrategy' => DefaultRenderingStrategy::class,
                 'MiddlewareListener' => MiddlewareListener::class,
-                'request' => 'Request',
-                'response' => 'Response',
                 'RouteListener' => RouteListener::class,
                 'SharedEventManagerInterface' => 'SharedEventManager',
                 'View' => View::class,
@@ -103,8 +99,6 @@ class ConfigProvider
                 'HttpViewManager' => HttpViewManagerFactory::class,
                 'InjectTemplateListener' => InjectTemplateListenerFactory::class,
                 'PaginatorPluginManager' => PaginatorPluginManagerFactory::class,
-                'Request' => RequestFactory::class,
-                'Response' => ResponseFactory::class,
                 'SharedEventManager' => SharedEventManagerFactory::class,
                 'ViewFeedStrategy' => ViewFeedStrategyFactory::class,
                 'ViewHelperManager' => ViewHelperManagerFactory::class,

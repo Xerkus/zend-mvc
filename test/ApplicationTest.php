@@ -58,8 +58,6 @@ class ApplicationTest extends TestCase
             $serviceConfig,
             [
                 'invokables' => [
-                    'Request'              => PhpEnvironment\Request::class,
-                    'Response'             => PhpEnvironment\Response::class,
                     'ViewManager'          => TestAsset\MockViewManager::class,
                     'StubBootstrapListener' => TestAsset\StubBootstrapListener::class,
                 ],
@@ -80,18 +78,6 @@ class ApplicationTest extends TestCase
         $this->serviceManager = new ServiceManager($serviceConfig);
         $this->serviceManager->setAllowOverride(true);
         $this->application = $this->serviceManager->get('Application');
-    }
-
-    public function testRequestIsPopulatedFromServiceManager()
-    {
-        $request = $this->serviceManager->get('Request');
-        $this->assertSame($request, $this->application->getRequest());
-    }
-
-    public function testResponseIsPopulatedFromServiceManager()
-    {
-        $response = $this->serviceManager->get('Response');
-        $this->assertSame($response, $this->application->getResponse());
     }
 
     public function testEventManagerIsPopulated()

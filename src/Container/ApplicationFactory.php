@@ -40,8 +40,6 @@ class ApplicationFactory implements FactoryInterface
         return new Application(
             $container,
             $container->get('EventManager'),
-            $container->get('Request'),
-            $container->get('Response'),
             $listeners
         );
     }

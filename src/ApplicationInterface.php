@@ -21,20 +21,6 @@ interface ApplicationInterface extends EventsCapableInterface
     public function getServiceManager();
 
     /**
-     * Get the request object
-     *
-     * @return \Zend\Stdlib\RequestInterface
-     */
-    public function getRequest();
-
-    /**
-     * Get the response object
-     *
-     * @return \Zend\Stdlib\ResponseInterface
-     */
-    public function getResponse();
-
-    /**
      * Run the application
      *
      * @return self

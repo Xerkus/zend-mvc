@@ -13,8 +13,6 @@ use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\RequestInterface;
-use Zend\Stdlib\ResponseInterface;
 
 use function array_merge;
 use function array_unique;
@@ -93,16 +91,6 @@ class Application implements
     protected $events;
 
     /**
-     * @var \Zend\Stdlib\RequestInterface
-     */
-    protected $request;
-
-    /**
-     * @var ResponseInterface
-     */
-    protected $response;
-
-    /**
      * @var ServiceManager
      */
     protected $serviceManager;
@@ -113,14 +101,10 @@ class Application implements
     public function __construct(
         ServiceManager $serviceManager,
         EventManagerInterface $events = null,
-        RequestInterface $request = null,
-        ResponseInterface $response = null,
         array $extraListeners = []
     ) {
         $this->serviceManager = $serviceManager;
         $this->setEventManager($events ?: $serviceManager->get('EventManager'));
-        $this->request        = $request ?: $serviceManager->get('Request');
-        $this->response       = $response ?: $serviceManager->get('Response');
         $this->extraListeners = $extraListeners;
     }
 
@@ -163,8 +147,6 @@ class Application implements
         $event->setName(MvcEvent::EVENT_BOOTSTRAP);
         $event->setTarget($this);
         $event->setApplication($this);
-        $event->setRequest($this->request);
-        $event->setResponse($this->response);
         $event->setRouter($serviceManager->get('Router'));
 
         // Trigger bootstrap events
@@ -179,26 +161,6 @@ class Application implements
     public function getServiceManager()
     {
         return $this->serviceManager;
-    }
-
-    /**
-     * Get the request object
-     *
-     * @return \Zend\Stdlib\RequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
-
-    /**
-     * Get the response object
-     *
-     * @return ResponseInterface
-     */
-    public function getResponse()
-    {
-        return $this->response;
     }
 
     /**
@@ -283,7 +245,6 @@ class Application implements
                 $event->setResponse($response);
                 $event->stopPropagation(false); // Clear before triggering
                 $events->triggerEvent($event);
-                $this->response = $response;
                 return $this;
             }
         }
@@ -305,11 +266,9 @@ class Application implements
             $event->setResponse($response);
             $event->stopPropagation(false); // Clear before triggering
             $events->triggerEvent($event);
-            $this->response = $response;
             return $this;
         }
 
-        $response = $this->response;
         $event->setResponse($response);
         return $this->completeRequest($event);
     }
