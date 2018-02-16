@@ -23,6 +23,7 @@ use Zend\Mvc\Container\HttpMethodListenerFactory;
 use Zend\Mvc\Container\HttpViewManagerFactory;
 use Zend\Mvc\Container\InjectTemplateListenerFactory;
 use Zend\Mvc\Container\PaginatorPluginManagerFactory;
+use Zend\Mvc\Container\RouteListenerFactory;
 use Zend\Mvc\Container\RouteNotFoundStrategyFactory;
 use Zend\Mvc\Container\SharedEventManagerFactory;
 use Zend\Mvc\Container\ViewFactory;
@@ -67,7 +68,6 @@ class ConfigProvider
                 'EventManagerInterface' => EventManager::class,
                 'HttpDefaultRenderingStrategy' => DefaultRenderingStrategy::class,
                 'MiddlewareListener' => MiddlewareListener::class,
-                'RouteListener' => RouteListener::class,
                 'SharedEventManagerInterface' => 'SharedEventManager',
                 'View' => View::class,
                 'ViewFeedRenderer' => FeedRenderer::class,
@@ -75,6 +75,7 @@ class ConfigProvider
                 'ViewPhpRenderer' => PhpRenderer::class,
                 'ViewPhpRendererStrategy' => PhpRendererStrategy::class,
                 'ViewRenderer' => PhpRenderer::class,
+                'Zend\Mvc\Router' => 'HttpRouter',
                 AggregateResolver::class => 'ViewResolver',
                 EventManagerInterface::class => 'EventManager',
                 InjectTemplateListener::class => 'InjectTemplateListener',
@@ -113,7 +114,7 @@ class ConfigProvider
                 MiddlewareListener::class => InvokableFactory::class,
                 PhpRenderer::class => ViewPhpRendererFactory::class,
                 PhpRendererStrategy::class => ViewPhpRendererStrategyFactory::class,
-                RouteListener::class => InvokableFactory::class,
+                RouteListener::class => RouteListenerFactory::class,
                 View::class => ViewFactory::class,
             ],
             'shared' => [
