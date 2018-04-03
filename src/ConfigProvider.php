@@ -26,6 +26,7 @@ use Zend\Mvc\Container\PaginatorPluginManagerFactory;
 use Zend\Mvc\Container\RouteFailureListenerFactory;
 use Zend\Mvc\Container\RouteListenerFactory;
 use Zend\Mvc\Container\RouteNotFoundStrategyFactory;
+use Zend\Mvc\Container\RouterFactory;
 use Zend\Mvc\Container\SharedEventManagerFactory;
 use Zend\Mvc\Container\ViewFactory;
 use Zend\Mvc\Container\ViewFeedStrategyFactory;
@@ -76,7 +77,6 @@ class ConfigProvider
                 'ViewPhpRenderer' => PhpRenderer::class,
                 'ViewPhpRendererStrategy' => PhpRendererStrategy::class,
                 'ViewRenderer' => PhpRenderer::class,
-                'Zend\Mvc\Router' => 'HttpRouter',
                 AggregateResolver::class => 'ViewResolver',
                 EventManagerInterface::class => 'EventManager',
                 InjectTemplateListener::class => 'InjectTemplateListener',
@@ -109,6 +109,7 @@ class ConfigProvider
                 'ViewResolver' => ViewResolverFactory::class,
                 'ViewTemplateMapResolver' => ViewTemplateMapResolverFactory::class,
                 'ViewTemplatePathStack' => ViewTemplatePathStackFactory::class,
+                'Zend\Mvc\Router' => RouterFactory::class,
                 DefaultRenderingStrategy::class => DefaultRenderingStrategyFactory::class,
                 FeedRenderer::class => InvokableFactory::class,
                 JsonRenderer::class => InvokableFactory::class,
