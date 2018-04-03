@@ -70,6 +70,7 @@ class Application implements ApplicationInterface
      */
     protected $defaultListeners = [
         RouteListener::class,
+        RouteFailureListener::class,
         MiddlewareListener::class,
         DispatchListener::class,
         HttpMethodListener::class,

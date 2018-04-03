@@ -23,6 +23,7 @@ use Zend\Mvc\Container\HttpMethodListenerFactory;
 use Zend\Mvc\Container\HttpViewManagerFactory;
 use Zend\Mvc\Container\InjectTemplateListenerFactory;
 use Zend\Mvc\Container\PaginatorPluginManagerFactory;
+use Zend\Mvc\Container\RouteFailureListenerFactory;
 use Zend\Mvc\Container\RouteListenerFactory;
 use Zend\Mvc\Container\RouteNotFoundStrategyFactory;
 use Zend\Mvc\Container\SharedEventManagerFactory;
@@ -114,6 +115,7 @@ class ConfigProvider
                 MiddlewareListener::class => InvokableFactory::class,
                 PhpRenderer::class => ViewPhpRendererFactory::class,
                 PhpRendererStrategy::class => ViewPhpRendererStrategyFactory::class,
+                RouteFailureListener::class => RouteFailureListenerFactory::class,
                 RouteListener::class => RouteListenerFactory::class,
                 View::class => ViewFactory::class,
             ],
