@@ -9,53 +9,33 @@ declare(strict_types=1);
 
 namespace Zend\Mvc\Controller;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\EventManager\EventInterface as Event;
-use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\Http\PhpEnvironment\Response as HttpResponse;
-use Zend\Http\Request as HttpRequest;
+use Zend\Mvc\Exception\DomainException;
 use Zend\Mvc\InjectApplicationEventInterface;
 use Zend\Mvc\MvcEvent;
-use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\DispatchableInterface as Dispatchable;
-use Zend\Stdlib\RequestInterface as Request;
-use Zend\Stdlib\ResponseInterface as Response;
+use Zend\View\Model\ModelInterface;
+
+use function array_values;
+use function get_class;
+use function lcfirst;
+use function str_replace;
+use function strrpos;
+use function strstr;
+use function substr;
+use function ucwords;
 
 /**
  * Abstract controller
- *
- * Convenience methods for pre-built plugins (@see __call):
- * @codingStandardsIgnoreStart
- * @method \Zend\View\Model\ModelInterface acceptableViewModelSelector(array $matchAgainst = null, bool $returnDefault = true, \Zend\Http\Header\Accept\FieldValuePart\AbstractFieldValuePart $resultReference = null)
- * @codingStandardsIgnoreEnd
- * @method \Zend\Mvc\Controller\Plugin\Forward forward()
- * @method \Zend\Mvc\Controller\Plugin\Layout|\Zend\View\Model\ModelInterface layout(string $template = null)
- * @method \Zend\Mvc\Controller\Plugin\Params|mixed params(string $param = null, mixed $default = null)
- * @method \Zend\Mvc\Controller\Plugin\Redirect redirect()
- * @method \Zend\Mvc\Controller\Plugin\Url url()
- * @method \Zend\View\Model\ViewModel createHttpNotFoundModel(Response $response)
  */
 abstract class AbstractController implements
-    Dispatchable,
+    ControllerInterface,
     EventManagerAwareInterface,
     InjectApplicationEventInterface
 {
-    /**
-     * @var PluginManager
-     */
-    protected $plugins;
-
-    /**
-     * @var Request
-     */
-    protected $request;
-
-    /**
-     * @var Response
-     */
-    protected $response;
-
     /**
      * @var MvcEvent
      */
@@ -72,37 +52,44 @@ abstract class AbstractController implements
     protected $eventIdentifier;
 
     /**
+     * Response factory
+     *
+     * @var callable
+     */
+    protected $responseFactory;
+
+    public function __construct(EventManagerInterface $events, callable $responseFactory)
+    {
+        $this->setEventManager($events);
+        // Ensures type safety of the composed factory
+        $this->responseFactory = function () use ($responseFactory) : ResponseInterface {
+            return $responseFactory();
+        };
+    }
+
+    /**
      * Execute the request
      *
-     * @param  MvcEvent $e
-     * @return mixed
+     * @return ResponseInterface|ModelInterface|array|null
      */
     abstract public function onDispatch(MvcEvent $e);
 
     /**
      * Dispatch a request
      *
-     * @events dispatch.pre, dispatch.post
-     * @param  Request $request
-     * @param  null|Response $response
-     * @return Response|mixed
+     * @events dispatch
+     * @return ResponseInterface|ModelInterface|array|null
      */
-    public function dispatch(Request $request, Response $response = null)
+    public function dispatch(ServerRequestInterface $request, ResponseInterface $responsePrototype = null)
     {
-        $this->request = $request;
-        if (! $response) {
-            $response = new HttpResponse();
-        }
-        $this->response = $response;
-
         $e = $this->getEvent();
         $e->setName(MvcEvent::EVENT_DISPATCH);
         $e->setRequest($request);
-        $e->setResponse($response);
+        $e->setResponse($responsePrototype ?? $this->getResponse());
         $e->setTarget($this);
 
         $result = $this->getEventManager()->triggerEventUntil(function ($test) {
-            return ($test instanceof Response);
+            return ($test instanceof ResponseInterface);
         }, $e);
 
         if ($result->stopped()) {
@@ -113,73 +100,67 @@ abstract class AbstractController implements
     }
 
     /**
-     * Get request object
-     *
-     * @return Request
+     * Convenience method for getting request object. Fetches request from event
      */
-    public function getRequest()
+    public function getRequest() : ServerRequestInterface
     {
-        if (! $this->request) {
-            $this->request = new HttpRequest();
+        $request = $this->getEvent()->getRequest();
+        if (! $request) {
+            throw new DomainException('No request. Request might not be available before dispatch');
         }
-
-        return $this->request;
+        return $request;
     }
 
     /**
-     * Get response object
-     *
-     * @return Response
+     * Convenience method for getting response object. Fetches response from
+     * event or creates new if none available
      */
-    public function getResponse()
+    public function getResponse() : ResponseInterface
     {
-        if (! $this->response) {
-            $this->response = new HttpResponse();
-        }
+        return $this->getEvent()->getResponse() ?? ($this->responseFactory)();
+    }
 
-        return $this->response;
+    /**
+     * Convenience method. Sets response into event.
+     */
+    public function setResponse(ResponseInterface $response) : void
+    {
+        $this->getEvent()->setResponse($response);
     }
 
     /**
      * Set the event manager instance used by this context
-     *
-     * @param  EventManagerInterface $events
-     * @return AbstractController
      */
-    public function setEventManager(EventManagerInterface $events)
+    public function setEventManager(EventManagerInterface $events) : void
     {
         $className = get_class($this);
 
-        $nsPos = strpos($className, '\\') ?: 0;
+        $identifiers = [
+            __CLASS__,
+            $className,
+        ];
+
+        $rightmostNsPos = strrpos($className, '\\');
+        if ($rightmostNsPos) {
+            $identifiers[] = strstr($className, '\\', true); // top namespace
+            $identifiers[] = substr($className, 0, $rightmostNsPos); // full namespace
+        }
+
         $events->setIdentifiers(array_merge(
-            [
-                __CLASS__,
-                $className,
-                substr($className, 0, $nsPos)
-            ],
+            $identifiers,
             array_values(class_implements($className)),
             (array) $this->eventIdentifier
         ));
 
         $this->events = $events;
         $this->attachDefaultListeners();
-
-        return $this;
     }
 
     /**
      * Retrieve the event manager
-     *
-     * Lazy-loads an EventManager instance if none registered.
-     *
-     * @return EventManagerInterface
      */
-    public function getEventManager()
+    public function getEventManager() : EventManagerInterface
     {
-        if (! $this->events) {
-            $this->setEventManager(new EventManager());
-        }
-
         return $this->events;
     }
 
@@ -187,11 +168,8 @@ abstract class AbstractController implements
      * Set an event to use during dispatch
      *
      * By default, will re-cast to MvcEvent if another event type is provided.
-     *
-     * @param  Event $e
-     * @return void
      */
-    public function setEvent(Event $e)
+    public function setEvent(Event $e) : void
     {
         if (! $e instanceof MvcEvent) {
             $eventParams = $e->getParams();
@@ -206,10 +184,8 @@ abstract class AbstractController implements
      * Get the attached event
      *
      * Will create a new MvcEvent if none provided.
-     *
-     * @return MvcEvent
      */
-    public function getEvent()
+    public function getEvent() : MvcEvent
     {
         if (! $this->event) {
             $this->setEvent(new MvcEvent());
@@ -219,72 +195,9 @@ abstract class AbstractController implements
     }
 
     /**
-     * Get plugin manager
-     *
-     * @return PluginManager
-     */
-    public function getPluginManager()
-    {
-        if (! $this->plugins) {
-            $this->setPluginManager(new PluginManager(new ServiceManager()));
-        }
-
-        $this->plugins->setController($this);
-        return $this->plugins;
-    }
-
-    /**
-     * Set plugin manager
-     *
-     * @param  PluginManager $plugins
-     * @return AbstractController
-     */
-    public function setPluginManager(PluginManager $plugins)
-    {
-        $this->plugins = $plugins;
-        $this->plugins->setController($this);
-
-        return $this;
-    }
-
-    /**
-     * Get plugin instance
-     *
-     * @param  string     $name    Name of plugin to return
-     * @param  null|array $options Options to pass to plugin constructor (if not already instantiated)
-     * @return mixed
-     */
-    public function plugin($name, array $options = null)
-    {
-        return $this->getPluginManager()->get($name, $options);
-    }
-
-    /**
-     * Method overloading: return/call plugins
-     *
-     * If the plugin is a functor, call it, passing the parameters provided.
-     * Otherwise, return the plugin instance.
-     *
-     * @param  string $method
-     * @param  array  $params
-     * @return mixed
-     */
-    public function __call($method, $params)
-    {
-        $plugin = $this->plugin($method);
-        if (is_callable($plugin)) {
-            return call_user_func_array($plugin, $params);
-        }
-
-        return $plugin;
-    }
-
-    /**
      * Register the default events for this controller
-     *
-     * @return void
      */
-    protected function attachDefaultListeners()
+    protected function attachDefaultListeners() : void
     {
         $events = $this->getEventManager();
         $events->attach(MvcEvent::EVENT_DISPATCH, [$this, 'onDispatch']);
@@ -296,7 +209,7 @@ abstract class AbstractController implements
      * @param  string $action
      * @return string
      */
-    public static function getMethodFromAction($action)
+    public static function getMethodFromAction(string $action) : string
     {
         $method  = str_replace(['.', '-', '_'], ' ', $action);
         $method  = ucwords($method);
