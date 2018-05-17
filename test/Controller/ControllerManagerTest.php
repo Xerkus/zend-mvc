@@ -10,25 +10,25 @@ declare(strict_types=1);
 namespace ZendTest\Mvc\Controller;
 
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
-use Zend\EventManager\SharedEventManager;
-use Zend\EventManager\SharedEventManagerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use stdClass;
+use Zend\Mvc\Controller\ControllerInterface;
 use Zend\Mvc\Controller\ControllerManager;
 use Zend\Mvc\Controller\PluginManager as ControllerPluginManager;
 use Zend\ServiceManager\Config;
+use Zend\ServiceManager\Exception\InvalidServiceException;
 use Zend\ServiceManager\Exception\ServiceNotFoundException;
 use Zend\ServiceManager\ServiceManager;
-use ZendTest\Mvc\Controller\TestAsset\SampleController;
 
+/**
+ * @covers \Zend\Mvc\Controller\ControllerManager
+ */
 class ControllerManagerTest extends TestCase
 {
     public function setUp()
     {
-        $this->sharedEvents   = new SharedEventManager;
-        $this->events         = $this->createEventManager($this->sharedEvents);
-
         $this->services = new ServiceManager();
         (new Config([
             'factories' => [
@@ -37,8 +37,7 @@ class ControllerManagerTest extends TestCase
                 },
             ],
             'services' => [
-                'EventManager'       => $this->events,
-                'SharedEventManager' => $this->sharedEvents,
+                'Foo'       => 'Bar',
             ],
         ]))->configureServiceManager($this->services);
 
@@ -46,57 +45,60 @@ class ControllerManagerTest extends TestCase
     }
 
     /**
-     * @param SharedEventManager
-     * @return EventManager
-     */
-    protected function createEventManager(SharedEventManagerInterface $sharedManager)
-    {
-        return new EventManager($sharedManager);
-    }
-
-    public function testCanInjectEventManager()
-    {
-        $controller = new SampleController();
-
-        $this->controllers->injectEventManager($this->services, $controller);
-
-        // The default AbstractController implementation lazy instantiates an EM
-        // instance, which means we need to check that that instance gets injected
-        // with the shared EM instance.
-        $events = $controller->getEventManager();
-        $this->assertInstanceOf(EventManagerInterface::class, $events);
-        $this->assertSame($this->sharedEvents, $events->getSharedManager());
-    }
-
-    public function testCanInjectPluginManager()
-    {
-        $controller = new SampleController();
-
-        $this->controllers->injectPluginManager($this->services, $controller);
-
-        $this->assertSame($this->services->get('ControllerPluginManager'), $controller->getPluginManager());
-    }
-
-    public function testInjectEventManagerWillNotOverwriteExistingEventManagerIfItAlreadyHasASharedManager()
-    {
-        $events     = $this->createEventManager($this->sharedEvents);
-        $controller = new SampleController();
-        $controller->setEventManager($events);
-
-        $this->controllers->injectEventManager($this->services, $controller);
-
-        $this->assertSame($events, $controller->getEventManager());
-        $this->assertSame($this->sharedEvents, $events->getSharedManager());
-    }
-
-    /**
-     * @covers Zend\ServiceManager\ServiceManager::has
-     * @covers Zend\ServiceManager\AbstractPluginManager::get
+     * @covers \Zend\ServiceManager\ServiceManager::has
+     * @covers \Zend\ServiceManager\AbstractPluginManager::get
      */
     public function testDoNotUsePeeringServiceManagers()
     {
-        $this->assertFalse($this->controllers->has('EventManager'));
+        $this->assertFalse($this->controllers->has('Foo'));
         $this->expectException(ServiceNotFoundException::class);
-        $this->controllers->get('EventManager');
+        $this->controllers->get('Foo');
+    }
+
+    public function testAllowsInstanceOfControllerInterface()
+    {
+        $controller = new class implements ControllerInterface {
+            public function dispatch(ServerRequestInterface $request, ResponseInterface $responsePrototype = null)
+            {
+                // noop
+            }
+        };
+
+        $this->controllers->setFactory('foo', function () use ($controller) {
+            return $controller;
+        });
+
+        $this->assertSame($controller, $this->controllers->get('foo'));
+    }
+
+    public function testAllowsInstanceOfRequestHandlerInterface()
+    {
+        $controller = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request) : ResponseInterface
+            {
+                // noop
+            }
+        };
+
+        $this->controllers->setFactory('foo', function () use ($controller) {
+            return $controller;
+        });
+
+        $this->assertSame($controller, $this->controllers->get('foo'));
+    }
+
+    public function testThrowsOnInvalidControllerType()
+    {
+        $this->controllers->setFactory('foo', function () {
+            return new stdClass();
+        });
+
+        $this->expectException(InvalidServiceException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Plugin of type "stdClass" is invalid; must implement %s or %s',
+            ControllerInterface::class,
+            RequestHandlerInterface::class
+        ));
+        $this->controllers->get('foo');
     }
 }
