@@ -37,7 +37,6 @@ use const SORT_REGULAR;
  * - Response
  * - RouteListener
  * - DispatchListener
- * - MiddlewareListener
  * - ViewManager
  *
  * The most common workflow is:
@@ -61,7 +60,6 @@ class Application implements ApplicationInterface
     const ERROR_CONTROLLER_INVALID         = 'error-controller-invalid';
     const ERROR_EXCEPTION                  = 'error-exception';
     const ERROR_ROUTER_NO_MATCH            = 'error-router-no-match';
-    const ERROR_MIDDLEWARE_CANNOT_DISPATCH = 'error-middleware-cannot-dispatch';
 
     /**
      * Default application event listeners
@@ -71,7 +69,6 @@ class Application implements ApplicationInterface
     protected $defaultListeners = [
         RouteListener::class,
         RouteFailureListener::class,
-        MiddlewareListener::class,
         DispatchListener::class,
         HttpMethodListener::class,
         ViewManager::class,

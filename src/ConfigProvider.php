@@ -69,7 +69,6 @@ class ConfigProvider
             'aliases' => [
                 'EventManagerInterface' => EventManager::class,
                 'HttpDefaultRenderingStrategy' => DefaultRenderingStrategy::class,
-                'MiddlewareListener' => MiddlewareListener::class,
                 'SharedEventManagerInterface' => 'SharedEventManager',
                 'View' => View::class,
                 'ViewFeedRenderer' => FeedRenderer::class,
@@ -113,7 +112,6 @@ class ConfigProvider
                 DefaultRenderingStrategy::class => DefaultRenderingStrategyFactory::class,
                 FeedRenderer::class => InvokableFactory::class,
                 JsonRenderer::class => InvokableFactory::class,
-                MiddlewareListener::class => InvokableFactory::class,
                 PhpRenderer::class => ViewPhpRendererFactory::class,
                 PhpRendererStrategy::class => ViewPhpRendererStrategyFactory::class,
                 RouteFailureListener::class => RouteFailureListenerFactory::class,

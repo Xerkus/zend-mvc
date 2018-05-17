@@ -25,7 +25,6 @@ use Zend\Mvc\Application;
 use Zend\Mvc\DispatchListener;
 use Zend\Mvc\Exception\DomainException;
 use Zend\Mvc\HttpMethodListener;
-use Zend\Mvc\MiddlewareListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\RouteFailureListener;
 use Zend\Mvc\RouteListener;
@@ -73,9 +72,6 @@ class ApplicationTest extends TestCase
 
         $dispatch = $this->prophesize(DispatchListener::class);
         $this->injectServiceInContainer($this->container, DispatchListener::class, $dispatch->reveal());
-
-        $middleware = $this->prophesize(MiddlewareListener::class);
-        $this->injectServiceInContainer($this->container, MiddlewareListener::class, $middleware->reveal());
 
         $viewManager = $this->prophesize(ViewManager::class);
         $this->injectServiceInContainer($this->container, ViewManager::class, $viewManager->reveal());
