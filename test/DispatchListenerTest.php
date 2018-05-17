@@ -10,37 +10,39 @@ declare(strict_types=1);
 namespace ZendTest\Mvc;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Zend\Diactoros\Response;
+use Zend\Diactoros\ServerRequest;
 use Zend\EventManager\EventManager;
-use Zend\Http\Request;
-use Zend\Http\Response;
 use Zend\Mvc\Application;
 use Zend\Mvc\Controller\ControllerManager;
 use Zend\Mvc\DispatchListener;
 use Zend\Mvc\MvcEvent;
-use Zend\Router\RouteMatch;
+use Zend\Router\RouteResult;
 use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\ResponseInterface;
 use Zend\View\Model\ModelInterface;
 
+/**
+ * @covers \Zend\Mvc\DispatchListener
+ */
 class DispatchListenerTest extends TestCase
 {
-    public function createMvcEvent($controllerMatched)
+    public function createMvcEvent(string $controllerMatched)
     {
-        $response   = new Response();
-        $routeMatch = $this->prophesize(RouteMatch::class);
-        $routeMatch->getParam('controller', 'not-found')->willReturn('path');
+        $request = new ServerRequest([], [], null, 'GET', 'php://memory');
+
+        $routeResult = RouteResult::fromRouteMatch(['controller' => $controllerMatched]);
+        $request = $request->withAttribute(RouteResult::class, $routeResult);
 
         $eventManager = new EventManager();
-
         $application = $this->prophesize(Application::class);
         $application->getEventManager()->willReturn($eventManager);
-        $application->getResponse()->willReturn($response);
 
         $event = new MvcEvent();
-        $event->setRequest(new Request());
-        $event->setResponse($response);
+        $event->setRequest($request);
         $event->setApplication($application->reveal());
-        $event->setRouteMatch($routeMatch->reveal());
 
         return $event;
     }
@@ -49,6 +51,33 @@ class DispatchListenerTest extends TestCase
     {
         $controllerManager = new ControllerManager(new ServiceManager(), ['abstract_factories' => [
             Controller\TestAsset\ControllerLoaderAbstractFactory::class,
+        ]]);
+        $listener = new DispatchListener($controllerManager);
+
+        $event = $this->createMvcEvent('path');
+
+        $log = [];
+        $event->getApplication()->getEventManager()->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use (&$log) {
+            $log['error'] = $e->getError();
+        });
+
+        $return = $listener->onDispatch($event);
+
+        $this->assertEmpty($log, var_export($log, true));
+        $this->assertSame($event->getResponse(), $return);
+        $this->assertSame(200, $return->getStatusCode());
+    }
+
+    public function testControllerIsARequestHandler()
+    {
+        $controller = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request) : ResponseInterface
+            {
+                return new Response();
+            }
+        };
+        $controllerManager = new ControllerManager(new ServiceManager(), ['services' => [
+            'path' => $controller,
         ]]);
         $listener = new DispatchListener($controllerManager);
 
@@ -124,7 +153,7 @@ class DispatchListenerTest extends TestCase
             [$this],
             [$this->createMock(ModelInterface::class)],
             [$this->createMock(ResponseInterface::class)],
-            [$this->createMock(Response::class)],
+            [new Response()],
             [['view model data' => 'as an array']],
             [['foo' => new \stdClass()]],
             ['a response string'],

@@ -9,18 +9,19 @@ declare(strict_types=1);
 
 namespace ZendTest\Mvc\TestAsset;
 
-use Zend\Stdlib\DispatchableInterface;
-use Zend\Stdlib\RequestInterface as Request;
-use Zend\Stdlib\ResponseInterface as Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Zend\Diactoros\Response;
+use Zend\Mvc\Controller\ControllerInterface;
 
-class PathController implements DispatchableInterface
+class PathController implements ControllerInterface
 {
-    public function dispatch(Request $request, Response $response = null)
+    public function dispatch(ServerRequestInterface $request, ResponseInterface $responsePrototype = null)
     {
-        if (! $response) {
-            $response = new HttpResponse();
+        if (! $responsePrototype) {
+            $response = new Response();
         }
-        $response->setContent(__METHOD__);
+        $response->getBody()->write(__METHOD__);
         return $response;
     }
 }
