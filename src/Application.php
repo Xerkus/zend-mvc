@@ -13,18 +13,9 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Mvc\Exception\DomainException;
-use Zend\Mvc\View\Http\ViewManager;
 
-use function array_merge;
-use function array_unique;
 use function get_class;
-use function gettype;
-use function is_object;
-use function is_string;
-
-use const SORT_REGULAR;
 
 /**
  * Main application class for invoking applications
@@ -62,26 +53,6 @@ class Application implements ApplicationInterface
     const ERROR_ROUTER_NO_MATCH            = 'error-router-no-match';
 
     /**
-     * Default application event listeners
-     *
-     * @var array
-     */
-    protected $defaultListeners = [
-        RouteListener::class,
-        RouteFailureListener::class,
-        DispatchListener::class,
-        HttpMethodListener::class,
-        ViewManager::class,
-    ];
-
-    /**
-     * Extra application event listeners
-     *
-     * @var array
-     */
-    private $extraListeners = [];
-
-    /**
      * @var MvcEvent
      */
     protected $event;
@@ -108,12 +79,10 @@ class Application implements ApplicationInterface
      */
     public function __construct(
         ContainerInterface $container,
-        EventManagerInterface $events,
-        array $extraListeners = []
+        EventManagerInterface $events
     ) {
         $this->container = $container;
         $this->setEventManager($events);
-        $this->extraListeners = $extraListeners;
         $this->event = new MvcEvent();
         $this->event->setApplication($this);
     }
@@ -131,32 +100,13 @@ class Application implements ApplicationInterface
         if ($this->bootstrapped) {
             return;
         }
-        $events = $this->events;
-
-        // Setup default listeners
-        $listeners = array_unique(array_merge($this->defaultListeners, $this->extraListeners), SORT_REGULAR);
-
-        foreach ($listeners as $listener) {
-            if (is_string($listener)) {
-                $listener = $this->container->get($listener);
-            }
-            if (! $listener instanceof ListenerAggregateInterface) {
-                throw new DomainException(sprintf(
-                    'Invalid listener provided. Expected %s, got %s',
-                    ListenerAggregateInterface::class,
-                    is_object($listener) ? get_class($listener) : gettype($listener)
-                ));
-            }
-            $listener->attach($events);
-        }
-
         // Setup MVC Event
         $event = $this->event;
         $event->setTarget($this);
         $event->setName(MvcEvent::EVENT_BOOTSTRAP);
 
         // Trigger bootstrap events
-        $events->triggerEvent($event);
+        $this->events->triggerEvent($event);
 
         $this->bootstrapped = true;
     }

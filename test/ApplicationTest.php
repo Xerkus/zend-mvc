@@ -13,22 +13,15 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Prophecy\ObjectProphecy;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use ReflectionProperty;
 use stdClass;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 use Zend\EventManager\EventManager;
-use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\SharedEventManager;
 use Zend\EventManager\Test\EventListenerIntrospectionTrait;
 use Zend\Mvc\Application;
-use Zend\Mvc\DispatchListener;
 use Zend\Mvc\Exception\DomainException;
-use Zend\Mvc\HttpMethodListener;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\RouteFailureListener;
-use Zend\Mvc\RouteListener;
-use Zend\Mvc\View\Http\ViewManager;
 
 /**
  * @covers \Zend\Mvc\Application
@@ -63,21 +56,6 @@ class ApplicationTest extends TestCase
         $this->container = $this->mockContainerInterface();
         $this->events = new EventManager(new SharedEventManager());
         $this->request = new ServerRequest([], [], null, 'GET', 'php://memory');
-
-        $route = $this->prophesize(RouteListener::class);
-        $this->injectServiceInContainer($this->container, RouteListener::class, $route->reveal());
-
-        $routeFailure = $this->prophesize(RouteFailureListener::class);
-        $this->injectServiceInContainer($this->container, RouteFailureListener::class, $routeFailure->reveal());
-
-        $dispatch = $this->prophesize(DispatchListener::class);
-        $this->injectServiceInContainer($this->container, DispatchListener::class, $dispatch->reveal());
-
-        $viewManager = $this->prophesize(ViewManager::class);
-        $this->injectServiceInContainer($this->container, ViewManager::class, $viewManager->reveal());
-
-        $httpMethod = $this->prophesize(HttpMethodListener::class);
-        $this->injectServiceInContainer($this->container, HttpMethodListener::class, $httpMethod->reveal());
 
         $this->application = new Application(
             $this->container->reveal(),
@@ -121,94 +99,6 @@ class ApplicationTest extends TestCase
         );
         $this->application->bootstrap();
         $this->assertTrue($called);
-    }
-
-    public function testBootstrapRegistersDefaultListeners()
-    {
-        $app = new Application(
-            $this->container->reveal(),
-            $this->events
-        );
-
-        $r = new ReflectionProperty($this->application, 'defaultListeners');
-        $r->setAccessible(true);
-        $defaultListeners = $r->getValue($this->application);
-        foreach ($defaultListeners as $defaultListenerName) {
-            $listener = $this->prophesize(ListenerAggregateInterface::class);
-            $listener->attach($this->events)->shouldBeCalled();
-            $this->injectServiceInContainer($this->container, $defaultListenerName, $listener->reveal());
-        }
-
-        $app->bootstrap();
-    }
-
-    public function testBootstrapRegistersExtraListeners()
-    {
-        $app = new Application(
-            $this->container->reveal(),
-            $this->events,
-            ['customListener']
-        );
-
-        $custom = $this->prophesize(ListenerAggregateInterface::class);
-        $this->injectServiceInContainer($this->container, 'customListener', $custom->reveal());
-        $custom->attach($this->events)->shouldBeCalled();
-
-        $app->bootstrap();
-    }
-
-
-    public function testBootstrapAlwaysRegistersDefaultListeners()
-    {
-        $app = new Application(
-            $this->container->reveal(),
-            $this->events,
-            ['customListener']
-        );
-
-        $custom = $this->prophesize(ListenerAggregateInterface::class);
-        $this->injectServiceInContainer($this->container, 'customListener', $custom->reveal());
-
-        $r = new ReflectionProperty($this->application, 'defaultListeners');
-        $r->setAccessible(true);
-        $defaultListeners = $r->getValue($this->application);
-        foreach ($defaultListeners as $defaultListenerName) {
-            $listener = $this->prophesize(ListenerAggregateInterface::class);
-            $listener->attach($this->events)->shouldBeCalled();
-            $this->injectServiceInContainer($this->container, $defaultListenerName, $listener->reveal());
-        }
-
-        $app->bootstrap();
-    }
-
-    public function testBootstrapRegistersListenerProvidedAsInstanceOfListenerAggregate()
-    {
-        $custom = $this->prophesize(ListenerAggregateInterface::class);
-        $custom->attach($this->events)->shouldBeCalled();
-        $app = new Application(
-            $this->container->reveal(),
-            $this->events,
-            [$custom->reveal()]
-        );
-
-        $app->bootstrap();
-    }
-
-    public function testBootstrapShouldThrowExceptionOnInvalidListener()
-    {
-        $app = new Application(
-            $this->container->reveal(),
-            $this->events,
-            ['customListener']
-        );
-
-        $invalid = new stdClass();
-        $this->injectServiceInContainer($this->container, 'customListener', $invalid);
-
-        $this->expectException(DomainException::class);
-        $this->expectExceptionMessage('Invalid listener provided');
-
-        $app->bootstrap();
     }
 
     public function testBootstrapSetsApplicationAsEventTarget()

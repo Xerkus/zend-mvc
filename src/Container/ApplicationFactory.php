@@ -11,6 +11,7 @@ namespace Zend\Mvc\Container;
 
 use Interop\Container\ContainerInterface;
 use Zend\Mvc\Application;
+use Zend\Mvc\ApplicationListenerAggregate;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 final class ApplicationFactory implements FactoryInterface
@@ -25,12 +26,16 @@ final class ApplicationFactory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $container, $name, array $options = null) : Application
     {
+        $application = new Application(
+            $container,
+            $container->get('EventManager')
+        );
+
         $config = $container->has('config') ? $container->get('config') : [];
         $listeners = $config[Application::class]['listeners'] ?? [];
-        return new Application(
-            $container,
-            $container->get('EventManager'),
-            $listeners
-        );
+        $aggregate = new ApplicationListenerAggregate($container, $listeners);
+        $aggregate->attach($application->getEventManager());
+
+        return $application;
     }
 }
