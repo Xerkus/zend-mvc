@@ -13,8 +13,8 @@ use Interop\Container\ContainerInterface;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Prophecy\ObjectProphecy;
 use Zend\Mvc\Container\ControllerManagerFactory;
+use Zend\Mvc\Controller\ControllerInterface;
 use Zend\Mvc\Controller\ControllerManager;
-use Zend\Stdlib\DispatchableInterface;
 use ZendTest\Mvc\ContainerTrait;
 
 /**
@@ -46,7 +46,7 @@ class ControllerManagerFactoryTest extends TestCase
         $controllerManager = $this->factory->__invoke($container, ControllerManager::class);
         $controllerManager->setFactory('Foo', function ($injectedContainer) use ($container) {
             $this->assertSame($container, $injectedContainer);
-            return $this->prophesize(DispatchableInterface::class)->reveal();
+            return $this->prophesize(ControllerInterface::class)->reveal();
         });
         $controllerManager->get('Foo');
     }
