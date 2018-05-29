@@ -25,6 +25,7 @@ class RedirectTest extends TestCase
 {
     public function setUp()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $this->response = new Response();
 
         $router = new SimpleRouteStack;

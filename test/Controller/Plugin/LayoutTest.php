@@ -20,6 +20,7 @@ class LayoutTest extends TestCase
 {
     public function setUp()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $this->event      = $event = new MvcEvent();
         $this->controller = new SampleController();
         $this->controller->setEvent($event);

@@ -18,6 +18,11 @@ use ZendTest\Mvc\Controller\Plugin\TestAsset\SamplePlugin;
 
 class PluginManagerTest extends TestCase
 {
+    protected function setUp()
+    {
+        $this->markTestIncomplete('PluginController fate is undecided');
+    }
+
     public function testPluginManagerInjectsControllerInPlugin()
     {
         $controller    = new SampleController;

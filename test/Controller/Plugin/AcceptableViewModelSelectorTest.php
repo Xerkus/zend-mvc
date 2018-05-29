@@ -23,6 +23,7 @@ class AcceptableViewModelSelectorTest extends TestCase
 {
     public function setUp()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $this->request = new Request();
 
         $event = new MvcEvent();

@@ -59,6 +59,7 @@ class ForwardTest extends TestCase
 
     public function setUp()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $eventManager = $this->createEventManager(new SharedEventManager());
         $mockApplication = $this->createMock(ApplicationInterface::class);
         $mockApplication->expects($this->any())->method('getEventManager')->will($this->returnValue($eventManager));

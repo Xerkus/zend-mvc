@@ -28,6 +28,7 @@ class UrlTest extends TestCase
 {
     public function setUp()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $router = new SimpleRouteStack;
         $router->addRoute('home', LiteralRoute::factory([
             'route'    => '/',

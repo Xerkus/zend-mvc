@@ -23,6 +23,7 @@ class CreateHttpNotFoundModelTest extends TestCase
 {
     public function testBuildsModelWithErrorMessageAndSetsResponseStatusCode()
     {
+        $this->markTestIncomplete('PluginController fate is undecided');
         $response = new Response();
         $plugin   = new CreateHttpNotFoundModel();
 
