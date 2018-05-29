@@ -15,7 +15,7 @@ use ReflectionProperty;
 use Zend\Mvc\Container\RouteListenerFactory;
 use PHPUnit\Framework\TestCase;
 use Zend\Mvc\RouteListener;
-use Zend\Router\RouteStackInterface;
+use Zend\Router\Router;
 use ZendTest\Mvc\ContainerTrait;
 
 /**
@@ -36,13 +36,13 @@ class RouteListenerFactoryTest extends TestCase
     private $factory;
 
     /**
-     * @var ObjectProphecy|RouteStackInterface
+     * @var ObjectProphecy|Router
      */
     private $router;
 
     public function setUp()
     {
-        $this->router = $this->prophesize(RouteStackInterface::class);
+        $this->router = $this->prophesize(Router::class);
         $this->container = $this->mockContainerInterface();
         $this->injectServiceInContainer($this->container, 'Zend\Mvc\Router', $this->router->reveal());
 
