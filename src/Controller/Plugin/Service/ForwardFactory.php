@@ -9,22 +9,18 @@ declare(strict_types=1);
 
 namespace Zend\Mvc\Controller\Plugin\Service;
 
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Zend\Mvc\Controller\Plugin\Forward;
 use Zend\ServiceManager\Exception\ServiceNotCreatedException;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 use function sprintf;
 
-class ForwardFactory implements FactoryInterface
+class ForwardFactory
 {
     /**
-     * {@inheritDoc}
-     *
-     * @return Forward
      * @throws ServiceNotCreatedException if Controllermanager service is not found in application service locator
      */
-    public function __invoke(ContainerInterface $container, $name, ?array $options = null)
+    public function __invoke(ContainerInterface $container) : Forward
     {
         if (! $container->has('ControllerManager')) {
             throw new ServiceNotCreatedException(sprintf(
