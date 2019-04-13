@@ -19,9 +19,7 @@ final class ApplicationFactory
     {
         $application = new Application(
             $container,
-            $container->get('EventManager'),
-            $container->get('Request'),
-            $container->get('Response')
+            $container->get('EventManager')
         );
 
         $container->get(ApplicationListenerProvider::class)

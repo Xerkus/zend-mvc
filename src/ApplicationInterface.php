@@ -11,8 +11,6 @@ namespace Zend\Mvc;
 
 use Psr\Container\ContainerInterface;
 use Zend\EventManager\EventsCapableInterface;
-use Zend\Stdlib\RequestInterface;
-use Zend\Stdlib\ResponseInterface;
 
 interface ApplicationInterface extends EventsCapableInterface
 {
@@ -20,20 +18,6 @@ interface ApplicationInterface extends EventsCapableInterface
      * Main Container object
      */
     public function getContainer() : ContainerInterface;
-
-    /**
-     * Get the request object
-     *
-     * @return RequestInterface
-     */
-    public function getRequest();
-
-    /**
-     * Get the response object
-     *
-     * @return ResponseInterface
-     */
-    public function getResponse();
 
     /**
      * Get the MVC event instance

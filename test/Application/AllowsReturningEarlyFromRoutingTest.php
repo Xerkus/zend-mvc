@@ -32,6 +32,6 @@ class AllowsReturningEarlyFromRoutingTest extends TestCase
 
         $result = $application->run();
         $this->assertSame($application, $result);
-        $this->assertSame($response, $result->getResponse());
+        $this->assertSame($response, $result->getMvcEvent()->getResponse());
     }
 }

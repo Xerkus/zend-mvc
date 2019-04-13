@@ -75,14 +75,12 @@ class Application implements ApplicationInterface
 
     public function __construct(
         ContainerInterface $container,
-        EventManagerInterface $events,
-        ?RequestInterface $request = null,
-        ?ResponseInterface $response = null
+        EventManagerInterface $events
     ) {
         $this->setEventManager($events);
         $this->container = $container;
-        $this->request   = $request ?: $container->get('Request');
-        $this->response  = $response ?: $container->get('Response');
+        $this->request   = $container->get('Request');
+        $this->response  = $container->get('Response');
 
         $event = new MvcEvent();
         $event->setApplication($this);
@@ -121,26 +119,6 @@ class Application implements ApplicationInterface
     public function getContainer() : ContainerInterface
     {
         return $this->container;
-    }
-
-    /**
-     * Get the request object
-     *
-     * @return RequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
-
-    /**
-     * Get the response object
-     *
-     * @return ResponseInterface
-     */
-    public function getResponse()
-    {
-        return $this->response;
     }
 
     /**

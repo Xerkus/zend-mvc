@@ -27,6 +27,7 @@ use Zend\Mvc\MvcEvent;
 use Zend\Router;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
 use Zend\View\Model\ViewModel;
 
@@ -74,18 +75,6 @@ class ApplicationTest extends TestCase
         $this->serviceManager = new ServiceManager($serviceConfig);
         $this->serviceManager->setAllowOverride(true);
         $this->application = $this->serviceManager->get('Application');
-    }
-
-    public function testRequestIsPopulatedFromServiceManager()
-    {
-        $request = $this->serviceManager->get('Request');
-        $this->assertSame($request, $this->application->getRequest());
-    }
-
-    public function testResponseIsPopulatedFromServiceManager()
-    {
-        $response = $this->serviceManager->get('Response');
-        $this->assertSame($response, $this->application->getResponse());
     }
 
     public function testEventManagerIsPopulated()
@@ -138,13 +127,11 @@ class ApplicationTest extends TestCase
         $event = $this->application->getMvcEvent();
         $this->assertInstanceOf(MvcEvent::class, $event);
 
-        $request  = $this->application->getRequest();
-        $response = $this->application->getResponse();
-        $router   = $this->serviceManager->get('HttpRouter');
+        $router = $this->serviceManager->get('HttpRouter');
 
         $this->assertFalse($event->isError());
-        $this->assertSame($request, $event->getRequest());
-        $this->assertSame($response, $event->getResponse());
+        $this->assertInstanceOf(RequestInterface::class, $event->getRequest());
+        $this->assertInstanceOf(ResponseInterface::class, $event->getResponse());
         $this->assertSame($router, $event->getRouter());
         $this->assertSame($this->application, $event->getApplication());
         $this->assertSame($this->application, $event->getTarget());
@@ -276,7 +263,7 @@ class ApplicationTest extends TestCase
         $application->run();
         $this->assertStringContainsString(
             'foobar',
-            $this->application->getResponse()->getBody(),
+            $this->application->getMvcEvent()->getResponse()->getBody(),
             'The "finish" event was not triggered ("foobar" not in response)'
         );
     }
@@ -291,7 +278,7 @@ class ApplicationTest extends TestCase
         $event       = $application->getMvcEvent();
         $event->setRouter($router);
 
-        $response = $application->getResponse();
+        $response = $application->getMvcEvent()->getResponse();
         $events   = $application->getEventManager();
         $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use ($response) {
             $error = $e->getError();
@@ -309,16 +296,15 @@ class ApplicationTest extends TestCase
      */
     public function testLocatorExceptionShouldTriggerDispatchError()
     {
-        $application      = $this->setupPathController(false);
-        $controllerLoader = $application->getContainer()->get('ControllerManager');
-        $response         = new Response();
+        $application = $this->setupPathController(false);
+        $response    = new Response();
         $application->getEventManager()->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use ($response) {
             return $response;
         });
 
         $result = $application->run();
         $this->assertSame($application, $result, get_class($result));
-        $this->assertSame($response, $result->getResponse(), get_class($result));
+        $this->assertSame($response, $result->getMvcEvent()->getResponse(), get_class($result));
     }
 
     /**
@@ -331,7 +317,7 @@ class ApplicationTest extends TestCase
          * @todo move to a proper place, it belongs to dispatch listener and integration tests
          */
         $this->setupBadController(true, 'test-php7-error');
-        $response = $this->application->getResponse();
+        $response = $this->application->getMvcEvent()->getResponse();
         $events   = $this->application->getEventManager();
         $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use ($response) {
             $exception = $e->getParam('exception');
@@ -354,7 +340,7 @@ class ApplicationTest extends TestCase
         $event       = $application->getMvcEvent();
         $event->setRouter($router);
 
-        $response = $application->getResponse();
+        $response = $application->getMvcEvent()->getResponse();
         $events   = $application->getEventManager();
         $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use ($response) {
             $error = $e->getError();
@@ -373,7 +359,7 @@ class ApplicationTest extends TestCase
     public function testFinishShouldRunEvenIfRouteEventReturnsResponse()
     {
         $this->application->bootstrap();
-        $response = $this->application->getResponse();
+        $response = $this->application->getMvcEvent()->getResponse();
         $events   = $this->application->getEventManager();
         $events->attach(MvcEvent::EVENT_ROUTE, function ($e) use ($response) {
             return $response;
@@ -395,7 +381,7 @@ class ApplicationTest extends TestCase
     public function testFinishShouldRunEvenIfDispatchEventReturnsResponse()
     {
         $this->application->bootstrap();
-        $response = $this->application->getResponse();
+        $response = $this->application->getMvcEvent()->getResponse();
         $events   = $this->application->getEventManager();
         $events->clearListeners(MvcEvent::EVENT_ROUTE);
         $events->attach(MvcEvent::EVENT_DISPATCH, function ($e) use ($response) {
@@ -417,7 +403,7 @@ class ApplicationTest extends TestCase
         $application = $this->setupActionController();
 
         $events   = $application->getEventManager();
-        $response = $application->getResponse();
+        $response = $application->getMvcEvent()->getResponse();
         $events->attach(MvcEvent::EVENT_FINISH, function ($e) use ($response) {
             $response->setContent('EventClass: ' . get_class($e->getTarget()));
             return $response;
@@ -448,7 +434,6 @@ class ApplicationTest extends TestCase
     {
         $this->application->bootstrap();
         $testResponse = new Response();
-        $response     = $this->application->getResponse();
         $events       = $this->application->getEventManager();
         $events->clearListeners(MvcEvent::EVENT_DISPATCH);
         $events->attach(MvcEvent::EVENT_ROUTE, function ($e) use ($testResponse) {
@@ -473,7 +458,6 @@ class ApplicationTest extends TestCase
     {
         $this->application->bootstrap();
         $testResponse = new Response();
-        $response     = $this->application->getResponse();
         $events       = $this->application->getEventManager();
         $events->clearListeners(MvcEvent::EVENT_ROUTE);
         $events->attach(MvcEvent::EVENT_DISPATCH, function ($e) use ($testResponse) {

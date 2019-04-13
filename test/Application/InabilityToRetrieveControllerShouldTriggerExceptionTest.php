@@ -27,7 +27,7 @@ class InabilityToRetrieveControllerShouldTriggerExceptionTest extends TestCase
     {
         $application = $this->prepareApplication();
 
-        $response = $application->getResponse();
+        $response = $application->getMvcEvent()->getResponse();
         $events   = $application->getEventManager();
         $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, function ($e) use ($response) {
             $error      = $e->getError();

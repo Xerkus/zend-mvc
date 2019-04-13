@@ -40,7 +40,6 @@ class DispatchListenerTest extends TestCase
 
         $application = $this->prophesize(Application::class);
         $application->getEventManager()->willReturn($eventManager);
-        $application->getResponse()->willReturn($response);
 
         $event = new MvcEvent();
         $event->setRequest(new Request());

@@ -132,7 +132,7 @@ class DispatchListener extends AbstractListenerAggregate
         }
 
         $request         = $e->getRequest();
-        $response        = $application->getResponse();
+        $response        = $e->getResponse();
         $caughtException = null;
 
         try {

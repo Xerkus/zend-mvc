@@ -60,8 +60,6 @@ class ApplicationFactoryTest extends TestCase
 
         $this->assertInstanceOf(Application::class, $application);
         $this->assertSame($events, $application->getEventManager());
-        $this->assertSame($request, $application->getRequest());
-        $this->assertSame($response, $application->getResponse());
     }
 
     public function testRegisterListenerFromListenerProvider()
