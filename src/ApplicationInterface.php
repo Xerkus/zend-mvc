@@ -10,9 +10,10 @@ declare(strict_types=1);
 namespace Zend\Mvc;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Zend\EventManager\EventsCapableInterface;
 
-interface ApplicationInterface extends EventsCapableInterface
+interface ApplicationInterface extends EventsCapableInterface, RequestHandlerInterface
 {
     /**
      * Main Container object
@@ -23,11 +24,4 @@ interface ApplicationInterface extends EventsCapableInterface
      * Get the MVC event instance
      */
     public function getMvcEvent() : MvcEvent;
-
-    /**
-     * Run the application
-     *
-     * @return self
-     */
-    public function run();
 }

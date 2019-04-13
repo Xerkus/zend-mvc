@@ -25,6 +25,7 @@ class InabilityToRetrieveControllerShouldTriggerDispatchErrorTest extends TestCa
      */
     public function testInabilityToRetrieveControllerShouldTriggerDispatchError()
     {
+        $this->markTestIncomplete('Integration test needs to be reimplemented');
         $application = $this->prepareApplication();
 
         $response = $application->getMvcEvent()->getResponse();

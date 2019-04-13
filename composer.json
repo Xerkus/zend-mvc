@@ -19,8 +19,11 @@
         "php": "^7.2",
         "container-interop/container-interop": "^1.2",
         "psr/container": "^1.0",
+        "psr/http-message": "^1.0",
+        "psr/http-server-handler": "^1.0",
         "zendframework/zend-eventmanager": "^3.2",
         "zendframework/zend-http": "^2.7",
+        "zendframework/zend-psr7bridge": "^1.2",
         "zendframework/zend-router": "^3.0.2",
         "zendframework/zend-servicemanager": "^3.4",
         "zendframework/zend-stdlib": "^3.2.1",
@@ -31,6 +34,7 @@
         "phpunit/phpunit": "^8.0",
         "webimpress/coding-standard": "dev-master",
         "zendframework/zend-coding-standard": "2.0.0-alpha.3",
+        "zendframework/zend-diactoros": "^2.1",
         "zendframework/zend-json": "^2.6.1 || ^3.0"
     },
     "suggest": {

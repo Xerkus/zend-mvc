@@ -24,6 +24,7 @@ class ExceptionsRaisedInDispatchableShouldRaiseDispatchErrorEventTest extends Te
      */
     public function testExceptionsRaisedInDispatchableShouldRaiseDispatchErrorEvent()
     {
+        $this->markTestIncomplete('Integration test needs to be reimplemented');
         $application = $this->prepareApplication();
 
         $response = $application->getMvcEvent()->getResponse();

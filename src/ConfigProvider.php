@@ -27,7 +27,6 @@ use Zend\Mvc\Service\HttpMethodListenerFactory;
 use Zend\Mvc\Service\HttpRouteNotFoundStrategyFactory;
 use Zend\Mvc\Service\HttpViewManagerFactory;
 use Zend\Mvc\Service\InjectTemplateListenerFactory;
-use Zend\Mvc\Service\RequestFactory;
 use Zend\Mvc\Service\ResponseFactory;
 use Zend\Mvc\Service\ViewFactory;
 use Zend\Mvc\Service\ViewFeedStrategyFactory;
@@ -72,7 +71,6 @@ class ConfigProvider
                 'configuration'                    => 'config',
                 'Configuration'                    => 'config',
                 'HttpDefaultRenderingStrategy'     => DefaultRenderingStrategy::class,
-                'request'                          => 'Request',
                 'response'                         => 'Response',
                 'RouteListener'                    => RouteListener::class,
                 'View'                             => View::class,
@@ -103,7 +101,6 @@ class ConfigProvider
                 'HttpRouteNotFoundStrategy'        => HttpRouteNotFoundStrategyFactory::class,
                 'HttpViewManager'                  => HttpViewManagerFactory::class,
                 'InjectTemplateListener'           => InjectTemplateListenerFactory::class,
-                'Request'                          => RequestFactory::class,
                 'Response'                         => ResponseFactory::class,
                 'RoutePluginManager'               => RoutePluginManagerFactory::class,
                 'ViewHelperManager'                => ViewHelperManagerFactory::class,

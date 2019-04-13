@@ -25,6 +25,7 @@ class InvalidControllerTypeShouldTriggerDispatchErrorTest extends TestCase
      */
     public function testInvalidControllerTypeShouldTriggerDispatchError()
     {
+        $this->markTestIncomplete('Integration test needs to be reimplemented');
         $application = $this->prepareApplication();
 
         $response = $application->getMvcEvent()->getResponse();

@@ -10,7 +10,13 @@ declare(strict_types=1);
 namespace Zend\Mvc;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\EventManager\EventManagerInterface;
+use Zend\Http\Response;
+use Zend\Mvc\Exception\RuntimeException;
+use Zend\Psr7Bridge\Psr7Response;
+use Zend\Psr7Bridge\Psr7ServerRequest;
 use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
 
@@ -79,12 +85,10 @@ class Application implements ApplicationInterface
     ) {
         $this->setEventManager($events);
         $this->container = $container;
-        $this->request   = $container->get('Request');
         $this->response  = $container->get('Response');
 
         $event = new MvcEvent();
         $event->setApplication($this);
-        $event->setRequest($this->request);
         $event->setResponse($this->response);
         $event->setRouter($container->get('Router'));
         $this->event = $event;
@@ -166,7 +170,7 @@ class Application implements ApplicationInterface
      *           that can be returned immediately.
      * @return self
      */
-    public function run()
+    private function run()
     {
         $this->bootstrap();
 
@@ -225,6 +229,21 @@ class Application implements ApplicationInterface
         $response = $this->response;
         $event->setResponse($response);
         return $this->completeRequest($event);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function handle(ServerRequestInterface $request) : PsrResponseInterface
+    {
+        $request = Psr7ServerRequest::toZend($request);
+        $this->getMvcEvent()->setRequest($request);
+        $this->run();
+        $response = $this->getMvcEvent()->getResponse();
+        if (! $response instanceof Response) {
+            throw new RuntimeException('Response is of unsupported type');
+        }
+        return Psr7Response::fromZend($response);
     }
 
     /**

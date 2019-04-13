@@ -22,6 +22,7 @@ class AllowsReturningEarlyFromRoutingTest extends TestCase
 
     public function testAllowsReturningEarlyFromRouting()
     {
+        $this->markTestIncomplete('Integration test needs to be reimplemented');
         $application = $this->prepareApplication();
 
         $response = new Response();

@@ -21,6 +21,7 @@ class ControllerIsDispatchedTest extends TestCase
 
     public function testControllerIsDispatchedDuringRun()
     {
+        $this->markTestIncomplete('Integration test needs to be reimplemented');
         $application = $this->prepareApplication();
 
         $response = $application->run()->getMvcEvent()->getResponse();
