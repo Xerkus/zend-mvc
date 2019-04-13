@@ -26,7 +26,6 @@ use Zend\Stdlib\ResponseInterface;
  * - RouteListener
  * - Router
  * - DispatchListener
- * - MiddlewareListener
  * - ViewManager
  *
  * The most common workflow is:
@@ -50,7 +49,6 @@ class Application implements ApplicationInterface
     public const ERROR_CONTROLLER_INVALID         = 'error-controller-invalid';
     public const ERROR_EXCEPTION                  = 'error-exception';
     public const ERROR_ROUTER_NO_MATCH            = 'error-router-no-match';
-    public const ERROR_MIDDLEWARE_CANNOT_DISPATCH = 'error-middleware-cannot-dispatch';
 
     /**
      * MVC event token

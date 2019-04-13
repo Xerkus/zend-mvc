@@ -20,7 +20,6 @@ final class ApplicationListenerProviderFactory
     /** @var string[] */
     private static $defaultApplicationListeners = [
         'RouteListener',
-        'MiddlewareListener',
         'DispatchListener',
         'HttpMethodListener',
         'ViewManager',
