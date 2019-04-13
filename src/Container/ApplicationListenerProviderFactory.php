@@ -23,7 +23,6 @@ final class ApplicationListenerProviderFactory
         'DispatchListener',
         'HttpMethodListener',
         'ViewManager',
-        'SendResponseListener',
     ];
 
     public function __invoke(ContainerInterface $container) : ApplicationListenerProvider

@@ -58,11 +58,10 @@ class ApplicationTest extends TestCase
             $serviceConfig,
             [
                 'invokables' => [
-                    'Request'              => PhpEnvironment\Request::class,
-                    'Response'             => PhpEnvironment\Response::class,
-                    'ViewManager'          => TestAsset\MockViewManager::class,
-                    'SendResponseListener' => TestAsset\MockSendResponseListener::class,
-                    'BootstrapListener'    => TestAsset\StubBootstrapListener::class,
+                    'Request'           => PhpEnvironment\Request::class,
+                    'Response'          => PhpEnvironment\Response::class,
+                    'ViewManager'       => TestAsset\MockViewManager::class,
+                    'BootstrapListener' => TestAsset\StubBootstrapListener::class,
                 ],
                 'factories'  => [
                     'Router' => Router\RouterFactory::class,

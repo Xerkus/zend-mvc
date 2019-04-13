@@ -29,7 +29,6 @@ use Zend\Mvc\Service\HttpViewManagerFactory;
 use Zend\Mvc\Service\InjectTemplateListenerFactory;
 use Zend\Mvc\Service\RequestFactory;
 use Zend\Mvc\Service\ResponseFactory;
-use Zend\Mvc\Service\SendResponseListenerFactory;
 use Zend\Mvc\Service\ViewFactory;
 use Zend\Mvc\Service\ViewFeedStrategyFactory;
 use Zend\Mvc\Service\ViewJsonStrategyFactory;
@@ -76,7 +75,6 @@ class ConfigProvider
                 'request'                          => 'Request',
                 'response'                         => 'Response',
                 'RouteListener'                    => RouteListener::class,
-                'SendResponseListener'             => SendResponseListener::class,
                 'View'                             => View::class,
                 'ViewFeedRenderer'                 => FeedRenderer::class,
                 'ViewJsonRenderer'                 => JsonRenderer::class,
@@ -123,7 +121,6 @@ class ConfigProvider
                 PhpRenderer::class                 => ViewPhpRendererFactory::class,
                 PhpRendererStrategy::class         => ViewPhpRendererStrategyFactory::class,
                 RouteListener::class               => InvokableFactory::class,
-                SendResponseListener::class        => SendResponseListenerFactory::class,
                 SharedEventManager::class          => InvokableFactory::class,
                 View::class                        => ViewFactory::class,
             ],

@@ -52,11 +52,10 @@ trait MissingControllerTrait
                     },
                 ],
                 'invokables' => [
-                    'Request'              => Request::class,
-                    'Response'             => Response::class,
-                    'ViewManager'          => TestAsset\MockViewManager::class,
-                    'SendResponseListener' => TestAsset\MockSendResponseListener::class,
-                    'BootstrapListener'    => TestAsset\StubBootstrapListener::class,
+                    'Request'           => Request::class,
+                    'Response'          => Response::class,
+                    'ViewManager'       => TestAsset\MockViewManager::class,
+                    'BootstrapListener' => TestAsset\StubBootstrapListener::class,
                 ],
                 'services'   => [
                     'config'            => $config,
